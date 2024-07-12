@@ -7,10 +7,12 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react'
 import { FaDiscord } from 'react-icons/fa'
 import { IoAddSharp } from "react-icons/io5";
-import { FaGear } from "react-icons/fa6";
+import { FaGear, FaHashtag } from "react-icons/fa6";
 import Modal from './sidebar/createserver';
+import ModalCreateChannel from './sidebar/createchannel'
 import { MyContext } from '@/app/context';
 import Image from 'next/image';
+import { IoIosArrowDown } from 'react-icons/io';
 
 export default function sidebar() {
 
@@ -20,6 +22,7 @@ export default function sidebar() {
     const [userServs, setUserServs] = useState([])
     const [generalData, setGeneralData] = useState({})
     const [modal, setModal] = useState(false)
+    const [modal_dois, setModal_dois] = useState(false)
     const [SingleServData, setSingleServData] = useState({})
     // const [canalSelected, setCanalSelected] = useState(true)
     // const [mobileselected, setMobileSelected] = useGlobalState('mobileselected')
@@ -123,7 +126,7 @@ export default function sidebar() {
     return (
 
         //Div Geral - Tamanho do sidebar inteiro
-        <Box width={'400px'} display={'flex'} height={'100%'} bg={'#2b2d31'}>
+        <Box width={'430px'} display={'flex'} height={'100%'} bg={'#2b2d31'}>
             <Box bg={'#202225'} display={'flex'} justifyContent={'center'} alignItems={'center'} height={'100%'} width={'75px'}>
                 <Box w={'80%'} height={'98%'} display={'flex'} flexDir={'column'}>
                     <Box w={'100%'} height={'58px'} position={'relative'} display={'flex'} justifyContent={'center'} >
@@ -181,17 +184,61 @@ export default function sidebar() {
             {/* Aqui é a Div GRANDE (Renderização dos canais/amigos) */}
 
             <Box flex={'1'} h={'full'}>
-                <Box width={'100%'} height='100%' justifyContent={'space-between'} display={'flex'} flexDir={'column'}>
+                <Box width={'100%'} height='100%' bg='bç' justifyContent={'space-between'} display={'flex'} flexDir={'column'}>
 
                     {/* Condição pra saber se o usuario há servidores e se selecionou um*/}
 
                     {
-                        userHasServer && isServerSelected ? <Box height={'full'} width={'full'}>
-                            <Box w={'full'} height={'50px'} borderBottom={'1px solid #000000b3'}>
+                        userHasServer && isServerSelected ? <Box height="calc(100% - 50px)" width={'full'}>
 
-                                <Text>BOB</Text>
+                            <Box display={'flex'} justifyContent={'center'} alignItems={'center'} width={'100%'} height={'50px'}>
+                                <Box width={'90%'} display={'flex'} justifyContent={'space-between'} alignItems={'center'} height={'90%'}>
+                                    <Text fontWeight={'800'} fontSize={'15px'} color={'white'}>{SingleServData?.name}</Text>
+                                    <IoIosArrowDown color='white' fontSize={'16px'} />
+
+                                </Box>
+                            </Box>
+
+                            <Box display={'flex'} justifyContent={'center'} width={'100%'} height={'100%'}>
+
+                                <Box width={'90%'} height={'90%'}>
+
+                                    {/* Box que mostra os canais de texto */}
+
+                                    <Box position={'relative'} display={'flex'} alignItems={'center'} flexDir={'row'}>
+                                        <IoIosArrowDown color='#96989D' fontWeight={'800'} fontSize={'12px'} /> <Text mt={'5px'} ml={'3px'} fontWeight={'800'} as={'span'} fontSize={'13px'} color='#96989D'>CANAIS DE TEXTO</Text>
+                                        <Box position={'absolute'} right={'0'}>
+                                            <IoAddSharp onClick={() => setModal_dois(true)} cursor={'pointer'} fontSize={'16px'} color='#96989D' />
+                                        </Box>
+
+                                    </Box>
+
+                                    <Box display={'flex'} alignItems={'center'} height={'50px'} width={'100%'}>
+                                        <FaHashtag fontSize={'20px'} color='#96989D' />
+                                        <Text color={'white'} fontSize={'15px'} ml={'5px'}>Geral</Text>
+                                    </Box>
+
+                                    {/* Box que mostra os canais de voz */}
+
+                                    <Box display={'flex'} alignItems={'center'} flexDir={'row'}>
+                                        <IoIosArrowDown color='#96989D' fontWeight={'800'} fontSize={'12px'} /> <Text mt={'5px'} ml={'3px'} fontWeight={'800'} as={'span'} fontSize={'13px'} color='#96989D'>CANAIS DE VOZ</Text>
+                                    </Box>
+
+                                    <Box display={'flex'} alignItems={'center'} height={'50px'} width={'100%'}>
+                                        <FaHashtag fontSize={'20px'} color='#96989D' />
+                                        <Text color={'#96989D'} fontSize={'15px'} ml={'5px'}>Geral</Text>
+                                    </Box>
+
+
+
+                                </Box>
 
                             </Box>
+
+
+
+
+
                         </Box> : <>
 
                             <Box mt={'20px'} className='w-full  flex-col h-auto flex justify-center items-center'>
@@ -249,6 +296,9 @@ export default function sidebar() {
 
 
             ) : <></>}
+            {modal_dois ?
+                <ModalCreateChannel />
+                : <></>}
         </Box>
 
     )

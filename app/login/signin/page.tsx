@@ -19,7 +19,7 @@ export default function main() {
 
   useEffect(() => {
     if (localStorage.getItem('logged')) {
-      router.replace('/teste')
+      router.replace('/main')
     }
   }, [router])
 

@@ -114,8 +114,6 @@ function Modal() {
             await setDoc(doc(db, "servidores", id), {
                 name: ServerName,
                 id: id,
-                chatVoz: [{ nome: 'Geral', data: [{}], id: randomId(len, pattern) }],
-                chatTexto: [{ nome: 'geral', data: [{}], id: randomId(len, pattern) }],
                 qtdPessoas: 1,
                 serverTime: serverTimestamp()
 
@@ -264,7 +262,7 @@ function Modal() {
     return (
         <>
             {!modal ? <></> : (
-                <Box id='modal' className='w-full h-[100vh] bg-[#000000dc] z-10 absolute'>
+                <Box id='modal' className='w-full h-[100vh] bg-[#000000b0] z-10 absolute'>
                     <Box className='w-full h-full flex justify-center items-center'>
                         <Box id='menu' className='w-[490px]  flex-col flex justify-center items-center rounded-md bg-white'>
                             {local === 1 ?
