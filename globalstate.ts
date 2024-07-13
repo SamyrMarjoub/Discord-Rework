@@ -4,5 +4,7 @@ const { setGlobalState, useGlobalState } = createGlobalState({
     mobileselected:0,
     modalOpen:0,
     pagination:0,
+    modal_open_2:0,
+    userData:{}
 })
 export { setGlobalState, useGlobalState }

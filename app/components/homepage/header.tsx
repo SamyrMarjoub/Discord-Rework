@@ -40,7 +40,7 @@ export default function header() {
                     </ul>
                 </Box>
                 <Box className='w-[10%] tablets:justify-end tablets:w-[50%] flex items-center  bg-red'>
-                    <Button color={'black'} className='w-full tablets:hidden
+                    <Button borderRadius={'1.5rem'} fontSize={'14px'} color={'black'} className='w-full tablets:hidden
              h-[40px] queryH:text-[13px]
               rounded-3xl bg-white
                text-[14px]' onClick={() => {

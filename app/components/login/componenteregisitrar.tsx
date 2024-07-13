@@ -3,7 +3,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth'
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore'
 import React from 'react'
 import { useState, useEffect } from 'react'
-import { useGlobalState, setGlobalState } from '@/globalState'
+import { useGlobalState, setGlobalState } from '../../../globalstate'
 import randomColor from 'randomcolor'
 import { auth, db } from '@/db/firebase'
 import randomId from 'random-id'
@@ -108,14 +108,14 @@ export default function componenteregistrar() {
                     <Text className='text-[#B9BBBE] mt-5 
                           inline-block font-bold text-[12px] 
                           mobile:inline-block mobile:mt-5'>E-MAIL</Text>
-                    <Input autoComplete='new-password' required onChange={(e) => setEmail(e.target.value)}
+                    <Input bg={'#202225'} border={'none'} autoComplete='new-password' required onChange={(e) => setEmail(e.target.value)}
                         type={'text'} value={email} className='w-full  p-2 outline-none text-[white] mt-2 bg-[#202225] h-[40px]' />
                     <Text className='text-[#B9BBBE] mt-[20px] inline-block font-bold text-[12px]'>NOME DE USUÁRIO</Text>
-                    <Input autoComplete='new-password' value={username} required onChange={(e) =>
+                    <Input bg={'#202225'}  border={'none'}  autoComplete='new-password' value={username} required onChange={(e) =>
                         setUsername(e.target.value)} type={'text'}
                         className='w-full mt-2  p-2 outline-none text-[white] bg-[#202225] h-[40px]' />
                     <Text className='text-[#B9BBBE] mt-[20px] inline-block font-bold text-[12px]'>SENHA</Text>
-                    <Input value={senha} autoComplete='new-password' required onChange={(e) => setSenha(e.target.value)}
+                    <Input bg={'#202225'}  border={'none'}  value={senha} autoComplete='new-password' required onChange={(e) => setSenha(e.target.value)}
                         type={'password'} className='w-full mt-2 outline-none text-[white] p-2 bg-[#202225] h-[40px]' />
                     <Text className='text-[#B9BBBE] mt-[20px] inline-block font-bold text-[12px]'>DATA DE NASCIMENTO</Text>
 
@@ -155,7 +155,7 @@ export default function componenteregistrar() {
                     </Box>
                     <Box className='w-full flex mt-2'>
                         <label className='relative chk mr-2'>
-                            <Input checked={focus} onChange={(e) => setFocus(e.target.checked)} type={'checkbox'} className='invisible' />
+                            <Input height={'auto'} bg={'#202225'}  border={'none'}  checked={focus} onChange={(e) => setFocus(e.target.checked)} type={'checkbox'} className='invisible' />
                             <Text className='h-[25px] sticky mt-[-24px] w-[25px] bg-transparent border rounded-[5px] border-[#72767D] block'></Text>
                         </label>
                         <Box className='w-[94%]'>
@@ -164,12 +164,12 @@ export default function componenteregistrar() {
                         </Box>
 
                     </Box>
-                    <Input className='w-full mt-5 h-[40px]
+                    <Input border={'none'}  bg={'#5865F2'}  className='w-full mt-5 h-[40px]
                                    bg-[#5865F2] text-white font-bold cursor-pointer' value={'Continuar'} type={'submit'} />
                 </form>
                 <Box className='flex w-full mt-1 flex-col'>
                     <Text className='text-[#00AFF4] text-[13px] cursor-pointer' onClick={() => setGlobalState('pagination', 0)}>Já tem uma conta?</Text>
-                    <Text className='text-[#A3A6AA] inline-block mt-1 text-[11px] max-w-[90%]'>Ao registrar, você concorda com os <Text display={'inline'} className='text-[#00AFF4]'>termos de serviço</Text> e a <Text display={'inline'} className='text-[#00AFF4]'>politica de privacidade </Text>do Discord </Text>
+                    <Text mt={'0'} className='text-[#A3A6AA] inline-block mt-1 text-[11px] max-w-[90%]'>Ao registrar, você concorda com os <Text display={'inline'} className='text-[#00AFF4]'>termos de serviço</Text> e a <Text display={'inline'} className='text-[#00AFF4]'>politica de privacidade </Text>do Discord </Text>
 
                 </Box>
             </Box>

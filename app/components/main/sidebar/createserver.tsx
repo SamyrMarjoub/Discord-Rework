@@ -5,7 +5,7 @@ import { MyContext } from '@/app/context'
 import Image from 'next/image'
 import newServer from '@/public/NewServer.svg'
 import { auth, db, storage } from '@/db/firebase'
-import { collection, query, where, getDocs, doc, getDoc, setDoc, serverTimestamp, addDoc, updateDoc, FieldValue, arrayUnion } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc, setDoc, serverTimestamp, addDoc, updateDoc, FieldValue, arrayUnion, Timestamp } from "firebase/firestore";
 import { onAuthStateChanged } from 'firebase/auth'
 import randomId from 'random-id'
 import { getDownloadURL, uploadString, ref } from 'firebase/storage'
@@ -109,14 +109,30 @@ function Modal() {
             reader.readAsDataURL(file)
 
         }
+
+        // Aqui se cria o servidor
+
         async function CreateServer() {
             const id = randomId(len, pattern)
             await setDoc(doc(db, "servidores", id), {
                 name: ServerName,
                 id: id,
                 qtdPessoas: 1,
-                serverTime: serverTimestamp()
+                serverTime: serverTimestamp(),
+                createdBy: data.username,
+                createdAt: Timestamp.now()
+            });
 
+            // Criar Chat 'GERAL' padrao
+
+            const chatId = randomId(len, pattern)
+            const chatDocRef = doc(db, 'chats', chatId);
+            await setDoc(chatDocRef, {
+                chatId: chatId,
+                name: 'Geral',
+                serverId: id,
+                createdBy: data.username,
+                createdAt: Timestamp.now(),
             });
 
             const imgRef = ref(storage, `servidores/${id}/serverImage}`)

@@ -17,9 +17,9 @@ export default function main() {
                         A place that makes it easy to talk every day and hang out more often.
                     </Text>
                     <Box className='flex query:flex-col  mt-6'>
-                        <Button color={'black'} className='w-[300px] mr-3 flex items-center
+                        <Button color={'black'}  h={'50px'} borderRadius={'1.5rem'} className='w-[300px] mr-3 flex items-center
          justify-center bg-white relative  h-[50px] rounded-3xl'> <FaDownload className='absolute left-[40px]' />Download for Windows</Button>
-                        <Button className='w-[300px] query:mt-5 bg-[#23272a]  h-[50px] text-white rounded-3xl' >Open Discord in your Browser</Button>
+                        <Button color={'white'} bg={'#23272a'} h={'50px'} borderRadius={'1.5rem'} className='w-[300px] query:mt-5   text-white rounded-3xl' >Open Discord in your Browser</Button>
 
                     </Box>
                     <Image className='absolute hidden smalltablets:block bottom-0 left-[-50px]' src={img2} alt='' width={600} />

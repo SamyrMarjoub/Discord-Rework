@@ -74,15 +74,15 @@ export default function componentelogin() {
             <form onSubmit={submitLogin}>
               <Text className='text-[#B9BBBE] spanL font-bold text-[12px] mobile:inline-block mobile:mt-5'>E-MAIL OU NÚMERO DE TELEFONE
                 {loginError === true ? (<Text as={'span'} className='text-[#F38688] text-[12px]'> - Login ou senha invalidos</Text>) : <></>} {loginError === false ? "*" : <></>}</Text>
-              <Input onChange={(e) => setEmailTel(e.target.value)} autoComplete='new-password' type={'text'} className='w-full p-2 text-white outline-none mt-2 bg-[#202225] h-[40px]' />
+              <Input border={'none'} bg='#202225' onChange={(e) => setEmailTel(e.target.value)} autoComplete='new-password' type={'text'} className='w-full p-2 text-white outline-none mt-2 bg-[#202225] h-[40px]' />
               <Text className='text-[#B9BBBE] spanL mt-[20px] inline-block font-bold text-[12px]'>SENHA  {loginError === true ? (<Text as={'span'} className='text-[#F38688] text-[12px]'> - Login ou senha invalidos</Text>) : <></>} {loginError === false ? "*" : <></>}</Text>
-              <Input onChange={(e) => setSenha(e.target.value)} autoComplete='new-password' type={'password'} className='w-full  p-2 text-white  mt-2 outline-none bg-[#202225] h-[40px]' />
+              <Input border={'none'} bg='#202225' onChange={(e) => setSenha(e.target.value)} autoComplete='new-password' type={'password'} className='w-full  p-2 text-white  mt-2 outline-none bg-[#202225] h-[40px]' />
               <Text className='text-[#00AFF4] mt-[5px] inline-block font-medium text-[13px]'>Esqueçeu sua senha? </Text>
-              <Input cursor={'pointer'} className='w-full mt-5 h-[40px]
+              <Input border={'none'} bg='#5865F2' cursor={'pointer'} className='w-full mt-5 h-[40px]
                                      bg-[#5865F2] text-white font-bold' value={'Entrar'} type={'submit'} />
             </form>
             <Text className='inline-block text-[13px]
-                                 text-[#A3A6AA] mt-2'>Precisando de uma conta? <Text as={'span'} display={'inline'} onClick={() => setGlobalState('pagination', 1)} className='text-[#00AFF4] cursor-pointer'>Registre-se</Text> </Text>
+                                 text-[#A3A6AA] mt-2'>Precisando de uma conta? <Text as={'span'} display={'inline'} onClick={() => [setGlobalState('pagination', 1), console.log(pagination)]} className='text-[#00AFF4] cursor-pointer'>Registre-se</Text> </Text>
           </Box>
         </Box>
         <Box className='w-[42%] tablets2:hidden flex justify-center flex-col items-end'>

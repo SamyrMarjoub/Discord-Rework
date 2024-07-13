@@ -16,25 +16,23 @@ import { IoIosArrowDown } from 'react-icons/io';
 
 export default function sidebar() {
 
-
     const router = useRouter()
     const [userData2, setUserData2] = useState({})
     const [userServs, setUserServs] = useState([])
     const [generalData, setGeneralData] = useState({})
     const [modal, setModal] = useState(false)
-    const [modal_dois, setModal_dois] = useState(false)
+    const [modal_dois, setModal_dois] = useGlobalState("modal_open_2")
     const [SingleServData, setSingleServData] = useState({})
     // const [canalSelected, setCanalSelected] = useState(true)
     // const [mobileselected, setMobileSelected] = useGlobalState('mobileselected')
     const [modalOpen, setModalOpen] = useGlobalState('modalOpen')
     const [userHasServer, setUserHasServer] = useState(null)
     const [isServerSelected, setIsServerSelected] = useState(false)
+    const [ServerData, setServerData] = useGlobalState('defaultCurrency')
+    const [chats, setChats] = useState([])
+    const [messages, setMessages] = useState([])
 
-    const rectangles1 = ['110px', '70px', '140px', '90px', '10%', '80%'];
-    const rectangles2 = ['100px', '80px', '100px', '70px', '70%', '80%'];
-
-
-
+    // Função de deslogar
     function logout() {
         signOut(auth)
         router.push('/login/signin')
@@ -43,16 +41,17 @@ export default function sidebar() {
         window.location.reload()
     }
 
+    // funcção de pegar as informações do usuario logado
     async function getUserData() {
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 setUserData2(user);
-
                 const docRef = doc(db, "usuarios", user.uid);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     setGeneralData(docSnap.data());
                     console.log(docSnap.data())
+                    setGlobalState('userData', docSnap.data())
                     const SideBarServers = async () => {
                         if (docSnap.data().servs.length !== 0) {
                             const q = query(collection(db, "servidores"), where("id", "in", docSnap.data().servs));
@@ -80,20 +79,53 @@ export default function sidebar() {
         console.log('foi');
     }
 
+    // função de pegar os chats do servidor selecionado
+    const getChats = async (ServerId: unknown) => {
+        try {
+            // Cria a referência à coleção 'chats' e cria a consulta
+            const q = query(collection(db, 'chats'), where('serverId', '==', ServerId));
+            const querySnapshot = await getDocs(q);
+
+            // Itera sobre os documentos retornados e armazena-os no state
+            const chatsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setChats(chatsData);
+            console.log(chatsData)
+        } catch (error) {
+            console.error('Error fetching server chats:', error);
+        }
+    };
+
+    const getMessages = async (chatId: unknown) => {
+        try {
+            // Cria a referência à coleção 'messages' e cria a consulta
+            const q = query(collection(db, 'mensagens'), where('chatId', '==', chatId));
+            const querySnapshot = await getDocs(q);
+
+            // Itera sobre os documentos retornados e faz o que for necessário com eles
+            querySnapshot.forEach(doc => {
+                console.log(doc.id, ' => ', doc.data());
+                // Aqui você pode armazenar os dados das mensagens em um estado local, exibir na UI, etc.
+            });
+        } catch (error) {
+            console.error('Error fetching messages for chat:', error);
+        }
+    };
+
+    //  função de selecionar o servidor e pegar suas inforações
     function OpenServer(e: any) {
         const id = e
         const data = userServs.find(item => item.id === id)
         setSingleServData(data)
+        getChats(data?.id)
         console.log(data)
         setIsServerSelected(true)
         setGlobalState("defaultCurrency", data)
     }
 
+    // Função pra abrir ou fechar o modal
     function modalSwitch() {
         setGlobalState('modalOpen', 1)
         setModal(true)
-        console.log(modalOpen)
-        console.log('clicou')
     }
 
     useEffect(() => {
@@ -107,6 +139,10 @@ export default function sidebar() {
 
     }, [])
 
+    const rectangles1 = ['110px', '70px', '140px', '90px', '10%', '80%'];
+    const rectangles2 = ['100px', '80px', '100px', '70px', '70%', '80%'];
+
+    // Funções de renderização..
     const MainBlock = ({ rectangles }: any) => (
         <Box className="w-full flex-col flex mt-10">
             <Box className="w-[35%] h-[20px] rounded-[5px] bg-[#4F545C]"></Box>
@@ -115,6 +151,8 @@ export default function sidebar() {
             ))}
         </Box>
     );
+
+    // Funções de renderização..
 
     const CircleWithRectangle = ({ width }: any) => (
         <Box className="flex mt-5 pl-2">
@@ -208,15 +246,21 @@ export default function sidebar() {
                                     <Box position={'relative'} display={'flex'} alignItems={'center'} flexDir={'row'}>
                                         <IoIosArrowDown color='#96989D' fontWeight={'800'} fontSize={'12px'} /> <Text mt={'5px'} ml={'3px'} fontWeight={'800'} as={'span'} fontSize={'13px'} color='#96989D'>CANAIS DE TEXTO</Text>
                                         <Box position={'absolute'} right={'0'}>
-                                            <IoAddSharp onClick={() => setModal_dois(true)} cursor={'pointer'} fontSize={'16px'} color='#96989D' />
+                                            {/* criar channels aqui */}
+                                            <IoAddSharp onClick={() => setGlobalState('modal_open_2', 1)} cursor={'pointer'} fontSize={'16px'} color='#96989D' />
                                         </Box>
 
                                     </Box>
+                                    {/* AQUI É RENDERIZADO OS CHATS */}
+                                    {chats.map((e, index) => {
+                                        return (
+                                            <Box cursor={'pointer'} _hover={{ bg: "#36393F" }} transition={'all 0.5s'} onClick={() => getMessages(e.chatId)} key={index} display={'flex'} alignItems={'center'} height={'35px'} width={'100%'}>
+                                                <FaHashtag style={{ 'marginLeft': '5px' }} fontSize={'17px'} color='white' />
+                                                <Text color={'white'} fontSize={'15px'} ml={'5px'}>{e?.name}</Text>
+                                            </Box>
+                                        )
+                                    })}
 
-                                    <Box display={'flex'} alignItems={'center'} height={'50px'} width={'100%'}>
-                                        <FaHashtag fontSize={'20px'} color='#96989D' />
-                                        <Text color={'white'} fontSize={'15px'} ml={'5px'}>Geral</Text>
-                                    </Box>
 
                                     {/* Box que mostra os canais de voz */}
 
@@ -224,8 +268,8 @@ export default function sidebar() {
                                         <IoIosArrowDown color='#96989D' fontWeight={'800'} fontSize={'12px'} /> <Text mt={'5px'} ml={'3px'} fontWeight={'800'} as={'span'} fontSize={'13px'} color='#96989D'>CANAIS DE VOZ</Text>
                                     </Box>
 
-                                    <Box display={'flex'} alignItems={'center'} height={'50px'} width={'100%'}>
-                                        <FaHashtag fontSize={'20px'} color='#96989D' />
+                                    <Box display={'flex'} alignItems={'center'} height={'35px'} width={'100%'}>
+                                        <FaHashtag style={{ 'marginLeft': '5px' }} fontSize={'17px'} color='#96989D' />
                                         <Text color={'#96989D'} fontSize={'15px'} ml={'5px'}>Geral</Text>
                                     </Box>
 
@@ -272,12 +316,12 @@ export default function sidebar() {
                             </Box>
                             <Box height={'full'} flex={'2'}>
                                 <Box display={'flex'} flexDir={'column'} pl='2px' width={'100%'} height={'100%'} >
-                                    <Text as={'span'} display={'inline-block'} ml={'5px'} color={'white'} fontWeight={'900'} fontSize={'13px'}>{generalData?.username}</Text>
+                                    <Text as={'span'} mt={'6px'} display={'inline-block'} ml={'5px'} color={'white'} fontWeight={'900'} fontSize={'13px'}>{generalData?.username}</Text>
                                     <Text as={'span'} mt='-5px' display={'inline-block'} ml={'3px'} color={'#96989D'} fontSize={'11.5px'}>#{generalData?.uid}</Text>
                                 </Box>
                             </Box>
-                            <Box flex={'1'}>
-                                <Box display={'flex'} justifyContent={'center'} alignItems={'center'} width={'100%'} height={'100%'}>
+                            <Box flex={'1'} height={'full'}>
+                                <Box _hover={{'bg':'#36393F'}} display={'flex'} justifyContent={'center'} alignItems={'center'} width={'100%'} height={'100%'}>
                                     <FaGear onClick={() => logout()} color='#96989D' fontSize={'19px'} />
 
                                 </Box>

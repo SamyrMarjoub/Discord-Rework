@@ -8,7 +8,7 @@ import bgImageDiscord from '@/public/discordloginbgimage.png'
 import ComponenteCriarConta from '@/app/components/login/componentecriarconta'
 import ComponenteLogin from '@/app/components/login/componentelogin'
 import ComponenteRegistrar from '@/app/components/login/componenteregisitrar'
-import { useGlobalState } from '@/globalState'
+import { useGlobalState } from '../../../globalstate'
 
 export default function main() {
 

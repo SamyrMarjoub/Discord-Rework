@@ -36,7 +36,7 @@ export default function componentecriarconta(props: { LoginRegisterInfo: string;
                     <Image src={keyAccount} alt='' className='mt-5' />
                     <Text className='block text-white text-[23px] font-bold mt-3'>Criar uma conta</Text>
                     <Text className='block text-[#A3A6AA]'>Bip bup. Bip big?</Text>
-                    <Button onClick={teste} className='w-[50%] bg-[#5865F2] rounded-3xl
+                    <Button border={'none'} color={'white'} rounded={'1.5rem'} bg={'#5865F2'} borderRadius={'1.5rem'} onClick={teste} className='w-[50%]
                        text-white text-[17px] uppercase font-bold tracking-[2px] h-[40px] mt-5'>Continuar</Button>
                 </Box>
             </Box>
