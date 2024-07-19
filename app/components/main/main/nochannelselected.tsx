@@ -5,7 +5,7 @@ import Image from 'next/image'
 
 export default function nochannelselected() {
   return (
-    <Box display={'flex'} justifyContent={'center'} alignItems={'center'} width={'100%'} height={'100%'} bg={'#202225'}>
+    <Box display={'flex'} justifyContent={'center'} alignItems={'center'} width={'100%'}height="100vh" bg={'#202225'}>
 
       <Box display={'flex'} justifyContent={'center'} flexDir={'column'} alignItems={'center'}>
         <Image  src={noChatSelected} alt={''} />

@@ -5,6 +5,9 @@ const { setGlobalState, useGlobalState } = createGlobalState({
     modalOpen:0,
     pagination:0,
     modal_open_2:0,
-    userData:{}
+    userData:{},
+    isServerSelected:false,
+    ServerChannelsData:[],
+    ChannelSelectedId:''
 })
 export { setGlobalState, useGlobalState }

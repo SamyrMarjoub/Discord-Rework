@@ -31,6 +31,7 @@ export default function sidebar() {
     const [ServerData, setServerData] = useGlobalState('defaultCurrency')
     const [chats, setChats] = useState([])
     const [messages, setMessages] = useState([])
+    const [ChannelSelectedId, SetChannelSelectedId] = useGlobalState('ChannelSelectedId');
 
     // Função de deslogar
     function logout() {
@@ -80,16 +81,29 @@ export default function sidebar() {
     }
 
     // função de pegar os chats do servidor selecionado
-    const getChats = async (ServerId: unknown) => {
+    const getChats = async (ServerId) => {
         try {
             // Cria a referência à coleção 'chats' e cria a consulta
             const q = query(collection(db, 'chats'), where('serverId', '==', ServerId));
             const querySnapshot = await getDocs(q);
 
             // Itera sobre os documentos retornados e armazena-os no state
-            const chatsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            let chatsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            // Separa o chat 'geral'
+            const generalChat = chatsData.find(chat => chat.name === 'Geral');
+            chatsData = chatsData.filter(chat => chat.name !== 'Geral');
+
+            // Adiciona o chat 'geral' no início do array
+            if (generalChat) {
+                chatsData.unshift(generalChat);
+                setGlobalState('ChannelSelectedId', generalChat.id)
+
+            }
+
             setChats(chatsData);
-            console.log(chatsData)
+            console.log(chatsData);
+            setGlobalState('ServerChannelsData', chatsData);
         } catch (error) {
             console.error('Error fetching server chats:', error);
         }
@@ -120,6 +134,7 @@ export default function sidebar() {
         console.log(data)
         setIsServerSelected(true)
         setGlobalState("defaultCurrency", data)
+        setGlobalState("isServerSelected", true)
     }
 
     // Função pra abrir ou fechar o modal
@@ -253,14 +268,26 @@ export default function sidebar() {
                                     </Box>
                                     {/* AQUI É RENDERIZADO OS CHATS */}
                                     {chats.map((e, index) => {
+                                        const isSelected = e.chatId === ChannelSelectedId;
                                         return (
-                                            <Box cursor={'pointer'} _hover={{ bg: "#36393F" }} transition={'all 0.5s'} onClick={() => getMessages(e.chatId)} key={index} display={'flex'} alignItems={'center'} height={'35px'} width={'100%'}>
-                                                <FaHashtag style={{ 'marginLeft': '5px' }} fontSize={'17px'} color='white' />
-                                                <Text color={'white'} fontSize={'15px'} ml={'5px'}>{e?.name}</Text>
+                                            <Box
+                                                cursor={'pointer'}
+                                                _hover={{ bg: "#36393F" }}
+                                                transition={'all 0.5s'}
+                                                onClick={() => [getMessages(e.chatId), setGlobalState('ChannelSelectedId', e.id)]}
+                                                key={index}
+                                                display={'flex'}
+                                                alignItems={'center'}
+                                                height={'35px'}
+                                                width={'100%'}
+                                            >
+                                                <FaHashtag style={{ 'marginLeft': '5px' }} fontSize={'17px'}  color={isSelected ? 'white' : '#96989D'} />
+                                                <Text color={isSelected ? 'white' : 'gray'} fontSize={'15px'} ml={'5px'}>
+                                                    {e?.name}
+                                                </Text>
                                             </Box>
-                                        )
+                                        );
                                     })}
-
 
                                     {/* Box que mostra os canais de voz */}
 
@@ -321,7 +348,7 @@ export default function sidebar() {
                                 </Box>
                             </Box>
                             <Box flex={'1'} height={'full'}>
-                                <Box _hover={{'bg':'#36393F'}} display={'flex'} justifyContent={'center'} alignItems={'center'} width={'100%'} height={'100%'}>
+                                <Box _hover={{ 'bg': '#36393F' }} display={'flex'} justifyContent={'center'} alignItems={'center'} width={'100%'} height={'100%'}>
                                     <FaGear onClick={() => logout()} color='#96989D' fontSize={'19px'} />
 
                                 </Box>
