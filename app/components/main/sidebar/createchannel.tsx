@@ -19,7 +19,9 @@ export default function createchannel() {
     const [data, setData] = useState({})
     const [modal, setModalOpen] = useGlobalState('modal_open_2')
     const [checked, setChecked] = useState(false);
-    
+
+
+
     const handleChange = (nextChecked: boolean | ((prevState: boolean) => boolean)) => {
         setChecked(nextChecked);
     };
@@ -73,13 +75,42 @@ export default function createchannel() {
         const [UserData, setUserData] = useGlobalState('userData')
         const [channelName, SetChannelName] = useState('')
 
+        // const getChats = async (serverId: unknown) => {
+        //     try {
+        //         // Cria a referência à coleção 'chats' e cria a consulta
+        //         const q = query(collection(db, 'chats'), where('serverId', '==', serverId));
+        //         const querySnapshot = await getDocs(q);
+
+        //         // Itera sobre os documentos retornados e armazena-os no state
+        //         let chatsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        //         // Separa o chat 'geral'
+        //         const generalChat = chatsData.find(chat => chat.name === 'Geral');
+        //         chatsData = chatsData.filter(chat => chat.name !== 'Geral');
+
+        //         // Adiciona o chat 'geral' no início do array
+        //         if (generalChat) {
+        //             chatsData.unshift(generalChat);
+        //             setGlobalState('ChannelSelectedId', generalChat.id)
+
+        //         }
+
+        //         setChats(chatsData);
+        //         console.log(chatsData);
+        //         setGlobalState('ServerChannelsData', chatsData);
+        //     } catch (error) {
+        //         console.error('Error fetching server chats:', error);
+        //     }
+        // };
+
+
         async function createChat() {
             const chatId = randomId(len, pattern)
             const chatDocRef = doc(db, 'chats', chatId);
 
             if (channelName.length >= 4) {
                 await setDoc(chatDocRef, {
-                    chatId:chatId,
+                    chatId: chatId,
                     name: channelName,
                     serverId: ServerData.id,
                     createdBy: UserData.username,
@@ -92,10 +123,11 @@ export default function createchannel() {
                     status: "success",
                     duration: 5000,
                     isClosable: true,
-                    position:'top'
+                    position: 'top'
                 });
                 CloseModal()
-
+                // getChats(ServerData.id)
+                setGlobalState('userCreatedChat', 1)
             } else {
                 return console.log('erro')
             }
@@ -239,7 +271,7 @@ export default function createchannel() {
                 <Box width={'100%'} display={'flex'} justifyContent={'center'} height={'15%'} bg='#2b2d31'>
                     <Box width={'90%'} display={'flex'} height={'90%'} alignItems={'center'} justifyContent={'flex-end'}>
                         <Button onClick={() => CloseModal()} border={'none'} width={'100px'} outline={'none'} fontSize={'13px'} bg='transparent' _hover={'none'} cursor={'pointer'} color={'white'} height={'30px'} mr={'15px'} >Cancelar</Button>
-                        <Button _hover={channelName.length <= 3 ? {} : { bg: '#414991' }} cursor={channelName.length <= 3 ? 'not-allowed' : 'pointer'} disabled={channelName.length <= 3} onClick={() => createChat()} border={'none'} outline={'none'} width={'100px'} color={channelName.length <=3 ? "#8c8e97" : 'white'} bg={channelName.length <=3 ? '#414991' : '#5865f2'} fontSize={'13px'} height={'40px'} borderRadius={'5px'}>Criar canal</Button>
+                        <Button _hover={channelName.length <= 3 ? {} : { bg: '#414991' }} cursor={channelName.length <= 3 ? 'not-allowed' : 'pointer'} disabled={channelName.length <= 3} onClick={() => createChat()} border={'none'} outline={'none'} width={'100px'} color={channelName.length <= 3 ? "#8c8e97" : 'white'} bg={channelName.length <= 3 ? '#414991' : '#5865f2'} fontSize={'13px'} height={'40px'} borderRadius={'5px'}>Criar canal</Button>
                     </Box>
 
 

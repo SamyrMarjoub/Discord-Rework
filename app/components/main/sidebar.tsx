@@ -32,6 +32,7 @@ export default function sidebar() {
     const [chats, setChats] = useState([])
     const [messages, setMessages] = useState([])
     const [ChannelSelectedId, SetChannelSelectedId] = useGlobalState('ChannelSelectedId');
+    const [userCreatedChat, setUserCreatedChat] = useGlobalState('userCreatedChat')
 
     // Função de deslogar
     function logout() {
@@ -135,6 +136,7 @@ export default function sidebar() {
         setIsServerSelected(true)
         setGlobalState("defaultCurrency", data)
         setGlobalState("isServerSelected", true)
+        setGlobalState('ChannelSelectedId', '')
     }
 
     // Função pra abrir ou fechar o modal
@@ -148,6 +150,13 @@ export default function sidebar() {
 
     }, [modal])
 
+
+
+    useEffect(() => {
+        if (userCreatedChat === 1) {
+            getChats(ServerData.id)
+        }
+    }, [userCreatedChat])
 
     useEffect(() => {
         getUserData()
@@ -269,25 +278,34 @@ export default function sidebar() {
                                     {/* AQUI É RENDERIZADO OS CHATS */}
                                     {chats.map((e, index) => {
                                         const isSelected = e.chatId === ChannelSelectedId;
+
                                         return (
                                             <Box
                                                 cursor={'pointer'}
                                                 _hover={{ bg: "#36393F" }}
                                                 transition={'all 0.5s'}
-                                                onClick={() => [getMessages(e.chatId), setGlobalState('ChannelSelectedId', e.id)]}
+                                                onClick={() => {
+                                                    getMessages(e.chatId);
+                                                    setGlobalState('ChannelSelectedId', e.id);
+                                                }}
                                                 key={index}
                                                 display={'flex'}
                                                 alignItems={'center'}
                                                 height={'35px'}
                                                 width={'100%'}
                                             >
-                                                <FaHashtag style={{ 'marginLeft': '5px' }} fontSize={'17px'}  color={isSelected ? 'white' : '#96989D'} />
+                                                <FaHashtag
+                                                    style={{ marginLeft: '5px' }}
+                                                    fontSize={'17px'}
+                                                    color={isSelected ? 'white' : '#96989D'}
+                                                />
                                                 <Text color={isSelected ? 'white' : 'gray'} fontSize={'15px'} ml={'5px'}>
                                                     {e?.name}
                                                 </Text>
                                             </Box>
                                         );
                                     })}
+
 
                                     {/* Box que mostra os canais de voz */}
 
