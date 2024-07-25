@@ -9,6 +9,7 @@ const { setGlobalState, useGlobalState } = createGlobalState({
     isServerSelected:false,
     ServerChannelsData:[],
     ChannelSelectedId:'',
-    userCreatedChat:0
+    userCreatedChat:0,
+    userMessagesMode:false
 })
 export { setGlobalState, useGlobalState }

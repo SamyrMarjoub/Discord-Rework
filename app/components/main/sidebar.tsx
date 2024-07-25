@@ -13,6 +13,7 @@ import ModalCreateChannel from './sidebar/createchannel'
 import { MyContext } from '@/app/context';
 import Image from 'next/image';
 import { IoIosArrowDown } from 'react-icons/io';
+import Usertousersidebar from './sidebar/usertousersidebar';
 
 export default function sidebar() {
 
@@ -27,12 +28,13 @@ export default function sidebar() {
     // const [mobileselected, setMobileSelected] = useGlobalState('mobileselected')
     const [modalOpen, setModalOpen] = useGlobalState('modalOpen')
     const [userHasServer, setUserHasServer] = useState(null)
-    const [isServerSelected, setIsServerSelected] = useState(false)
+    const [isServerSelected, setIsServerSelected] = useGlobalState('isServerSelected')
     const [ServerData, setServerData] = useGlobalState('defaultCurrency')
     const [chats, setChats] = useState([])
     const [messages, setMessages] = useState([])
     const [ChannelSelectedId, SetChannelSelectedId] = useGlobalState('ChannelSelectedId');
     const [userCreatedChat, setUserCreatedChat] = useGlobalState('userCreatedChat')
+    const [userMessagesMode, setMessagesMode] = useGlobalState('userMessagesMode')
 
     // Função de deslogar
     function logout() {
@@ -133,10 +135,10 @@ export default function sidebar() {
         setSingleServData(data)
         getChats(data?.id)
         console.log(data)
-        setIsServerSelected(true)
         setGlobalState("defaultCurrency", data)
         setGlobalState("isServerSelected", true)
         setGlobalState('ChannelSelectedId', '')
+        setGlobalState('userMessagesMode', false)
     }
 
     // Função pra abrir ou fechar o modal
@@ -191,7 +193,7 @@ export default function sidebar() {
         <Box width={'430px'} display={'flex'} height={'100%'} bg={'#2b2d31'}>
             <Box bg={'#202225'} display={'flex'} justifyContent={'center'} alignItems={'center'} height={'100%'} width={'75px'}>
                 <Box w={'80%'} height={'98%'} display={'flex'} flexDir={'column'}>
-                    <Box w={'100%'} height={'58px'} position={'relative'} display={'flex'} justifyContent={'center'} >
+                    <Box onClick={() => { [setGlobalState('userMessagesMode', true), setGlobalState('isServerSelected', false)] }} w={'100%'} height={'58px'} position={'relative'} display={'flex'} justifyContent={'center'} >
                         <Box lineHeight={'center'} bg={'#36393F'} display={'flex'} justifyContent={'center'} alignItems={'center'} borderRadius={'47px'} w={'47px'} height={'47px'}>
                             <FaDiscord color='#DCDDDE' fontSize={'25px'} />
                         </Box>
@@ -249,9 +251,10 @@ export default function sidebar() {
                 <Box width={'100%'} height='100%' bg='bç' justifyContent={'space-between'} display={'flex'} flexDir={'column'}>
 
                     {/* Condição pra saber se o usuario há servidores e se selecionou um*/}
+                    {/* AQUIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII::: COMEÇA */}
 
                     {
-                        userHasServer && isServerSelected ? <Box height="calc(100% - 50px)" width={'full'}>
+                        userHasServer && isServerSelected && userMessagesMode != true ? <Box height="calc(100% - 50px)" width={'full'}>
 
                             <Box display={'flex'} justifyContent={'center'} alignItems={'center'} width={'100%'} height={'50px'}>
                                 <Box width={'90%'} display={'flex'} justifyContent={'space-between'} alignItems={'center'} height={'90%'}>
@@ -276,6 +279,8 @@ export default function sidebar() {
 
                                     </Box>
                                     {/* AQUI É RENDERIZADO OS CHATS */}
+
+                                    {/* <Usertousersidebar/> */}
                                     {chats.map((e, index) => {
                                         const isSelected = e.chatId === ChannelSelectedId;
 
@@ -328,30 +333,42 @@ export default function sidebar() {
 
 
 
-                        </Box> : <>
+                        </Box> : !isServerSelected && userMessagesMode != false ? <>
 
-                            <Box mt={'20px'} className='w-full  flex-col h-auto flex justify-center items-center'>
-                                <Box className='w-[95%] flex items-center flex-1 '>
-                                    <Box className='w-full h-[97%]'>
-                                        <Box className='w-full flex-col bg-red  flex'>
-                                            <Box className="w-[35%] h-[20px] rounded-[5px] bg-[#4F545C]"></Box>
-                                            {rectangles1.map((width, index) => (
-                                                <CircleWithRectangle key={index} width={width} />
-                                            ))}
+                            <Usertousersidebar />
+                        </>
+
+                            : <>
+                                <Box mt={'20px'} className='w-full  flex-col h-auto flex justify-center items-center'>
+                                    <Box className='w-[95%] flex items-center flex-1 '>
+                                        <Box className='w-full h-[97%]'>
+                                            <Box className='w-full flex-col bg-red  flex'>
+                                                <Box className="w-[35%] h-[20px] rounded-[5px] bg-[#4F545C]"></Box>
+                                                {rectangles1.map((width, index) => (
+                                                    <CircleWithRectangle key={index} width={width} />
+                                                ))}
+                                            </Box>
+
+                                            <MainBlock rectangles={rectangles2} />
                                         </Box>
 
-                                        <MainBlock rectangles={rectangles2} />
+
+
                                     </Box>
 
 
-
                                 </Box>
+                            </>}
 
 
-                            </Box>
-                        </>
+                    {/* AQUIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII termina */}
 
-                    }
+
+
+
+
+
+
                     {/* Aqui é a barra inferior, que fica o nick, foto de perfil e as configs (LOGOUT) */}
 
                     <Box display={'flex'} justifyContent={'center'} alignItems={'center'} width={'100%'} height={'50px'} bg={'#232428'}>
