@@ -193,8 +193,8 @@ export default function sidebar() {
         <Box width={'430px'} display={'flex'} height={'100%'} bg={'#2b2d31'}>
             <Box bg={'#202225'} display={'flex'} justifyContent={'center'} alignItems={'center'} height={'100%'} width={'75px'}>
                 <Box w={'80%'} height={'98%'} display={'flex'} flexDir={'column'}>
-                    <Box onClick={() => { [setGlobalState('userMessagesMode', true), setGlobalState('isServerSelected', false)] }} w={'100%'} height={'58px'} position={'relative'} display={'flex'} justifyContent={'center'} >
-                        <Box lineHeight={'center'} bg={'#36393F'} display={'flex'} justifyContent={'center'} alignItems={'center'} borderRadius={'47px'} w={'47px'} height={'47px'}>
+                    <Box w={'100%'} height={'58px'} position={'relative'} display={'flex'} justifyContent={'center'} >
+                        <Box _hover={{'bg':'#5865f2'}}  cursor={'pointer'} onClick={() => { [setGlobalState('userMessagesMode', true), setGlobalState('isServerSelected', false)] }} lineHeight={'center'} bg={userMessagesMode ? '#5865f2' : '#36393F'} display={'flex'} justifyContent={'center'} alignItems={'center'} borderRadius={'47px'} w={'47px'} height={'47px'}>
                             <FaDiscord color='#DCDDDE' fontSize={'25px'} />
                         </Box>
                         <Box width={'60%'} height={'2px'} bg={'#36393F'} position={'absolute'} bottom={'0'} left={'20%'}>
@@ -383,8 +383,8 @@ export default function sidebar() {
                                 </Box>
                             </Box>
                             <Box flex={'1'} height={'full'}>
-                                <Box _hover={{ 'bg': '#36393F' }} display={'flex'} justifyContent={'center'} alignItems={'center'} width={'100%'} height={'100%'}>
-                                    <FaGear onClick={() => logout()} color='#96989D' fontSize={'19px'} />
+                                <Box onClick={() => logout()} cursor={'pointer'} _hover={{ 'bg': '#36393F' }} display={'flex'} transition={'0.2s all'} justifyContent={'center'} alignItems={'center'} width={'100%'} height={'100%'}>
+                                    <FaGear  color='#96989D' fontSize={'19px'}  />
 
                                 </Box>
                             </Box>
