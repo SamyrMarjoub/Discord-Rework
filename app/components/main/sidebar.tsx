@@ -139,6 +139,7 @@ export default function sidebar() {
         setGlobalState("isServerSelected", true)
         setGlobalState('ChannelSelectedId', '')
         setGlobalState('userMessagesMode', false)
+        setGlobalState('friendchatopen', false)
     }
 
     // Função pra abrir ou fechar o modal

@@ -1,9 +1,7 @@
-import { db } from '@/db/firebase'
 import { useGlobalState } from '@/globalstate'
 import { Box, Input, InputGroup, InputLeftElement, InputRightElement, Text } from '@chakra-ui/react'
-import { collection, getDocs, query, where } from 'firebase/firestore'
-import React, { useEffect } from 'react'
-import { FaHashtag, FaSearch, FaUserFriends } from 'react-icons/fa'
+import React, { useEffect, useState } from 'react'
+import { FaHashtag, FaSearch, FaUserFriends, FaDiscord } from 'react-icons/fa'
 
 
 export default function header() {
@@ -11,7 +9,8 @@ export default function header() {
   const [ServerData, SetServerData] = useGlobalState('defaultCurrency')
   const [ServerChannelsData, SetServerChannelsData] = useGlobalState('ServerChannelsData')
   const [ChannelSelectedId, SetChannelSelectedId] = useGlobalState('ChannelSelectedId')
-
+  const [frienduserData, setFriendUserData] = useGlobalState('friendChatUserData')
+  const [isFriendChatOpen, setIsFriendChatOpen] = useGlobalState('friendchatopen')
   const selectedChannel = ServerChannelsData.find(channel => channel.id === ChannelSelectedId);
 
   useEffect(() => {
@@ -23,10 +22,22 @@ export default function header() {
       <Box justifyContent={'space-between'} display={'flex'} width={'98%'} height={'100%'}>
         <Box>
           <Box alignItems={'center'} height={'100%'} display={'flex'}>
-            <FaHashtag fontSize={'18px'} color='#96989D' />
-            {ServerChannelsData.length > 0 && selectedChannel && (
-              <Text ml={'7px'} color={'white'}>{selectedChannel.name}</Text>
+            {ServerChannelsData.length > 0 && selectedChannel && !isFriendChatOpen ? (
+              <>
+                <FaHashtag fontSize={'18px'} color='#96989D' />
+                <Text ml={'7px'} color={'white'}>{selectedChannel?.name}</Text>
+
+              </>
+            ) : (
+              <>
+                <Box width={'35px'} height={'35px'} display={'flex'} justifyContent={'center'} alignItems={'center'} borderRadius={'35px'} bg={frienduserData?.bgIconColor} >
+                  <FaDiscord fontSize={'20px'} color='white' />
+                </Box>
+                <Text ml={'7px'} color={'white'}>{frienduserData?.username}</Text>
+
+              </>
             )}
+
           </Box>
         </Box>
         <Box display={'flex'} alignItems={'center'}>

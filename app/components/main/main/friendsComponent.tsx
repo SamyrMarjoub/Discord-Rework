@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { FaDiscord, FaUserFriends } from "react-icons/fa";
 import { db } from '@/db/firebase';
 import { getFirestore, collection, query, where, getDocs, doc, updateDoc, arrayUnion, arrayRemove, getDoc, DocumentData, setDoc } from "firebase/firestore";
-import { useGlobalState } from '@/globalstate';
+import { setGlobalState, useGlobalState } from '@/globalstate';
 import { MdCheck, MdClose } from "react-icons/md";
 import Image from 'next/image';
 import pendente from '@/public/pendente.svg'
@@ -15,6 +15,8 @@ import { useToast } from '@chakra-ui/react'
 export default function friendsComponent() {
     const [selected, setSelected] = useState(0)
     const [userData, setUserData] = useGlobalState('userData')
+    const [friendchatopen, setFriendChatOpen] = useGlobalState('friendchatopen')
+
     const toast = useToast()
 
     function HeaderFriendsComponent() {
@@ -100,7 +102,7 @@ export default function friendsComponent() {
 
                         <Box display="flex" width="100%">
                             {amigos.map((request, index) => (
-                                <Box borderBottom={'1px solid #525254'} cursor={'pointer'} _hover={{ 'bg': '#0000001a' }} transition={'all 0.2s'}
+                                <Box onClick={()=>{setGlobalState('friendchatopen',true), setGlobalState('chatfriendopenuid', request.uid)}} borderBottom={'1px solid #525254'} cursor={'pointer'} _hover={{ 'bg': '#0000001a' }} transition={'all 0.2s'}
                                     width="100%" key={index} p='10px' display="flex" alignItems="center" mb="10px">
                                     <Box display={'flex'} justifyContent='center' alignItems={'center'} mr="10px"
                                         width="40px" height="40px" borderRadius="40px" bg={request.bgIconColor}>
