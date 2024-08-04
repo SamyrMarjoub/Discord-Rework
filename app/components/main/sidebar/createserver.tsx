@@ -238,7 +238,7 @@ function Modal() {
                     await updateDoc(doc(db, 'usuarios', data.id), {
                         servs: arrayUnion(dataA.id)
                     })
-
+                    CloseModal()
                 });
             }
         }

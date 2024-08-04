@@ -1,9 +1,42 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Input, Text } from '@chakra-ui/react';
-import { IoAddSharp } from 'react-icons/io5';
-import { FaUserFriends } from "react-icons/fa";
+import { IoAddSharp, IoChatbubbleSharp } from 'react-icons/io5';
+import { FaDiscord, FaUserFriends } from "react-icons/fa";
+import { db } from '@/db/firebase';
+import { setGlobalState, useGlobalState } from '@/globalstate';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
 const ChatInterface = () => {
+  const [userData, setUserData] = useGlobalState('userData');
+
+  const [amigos, setAmigos] = useState([]);
+
+  useEffect(() => {
+    async function fetchAmigosData() {
+      const amigosData = [];
+      const amigosCollection = collection(db, "usuarios"); // Coleção de usuários
+
+      for (const uid of userData.friends) {
+        const q = query(amigosCollection, where("uid", "==", uid)); // Consulta para o campo 'uid'
+
+        try {
+          const querySnapshot = await getDocs(q);
+          querySnapshot.forEach(doc => {
+            amigosData.push({ id: doc.id, ...doc.data() }); // Adiciona o ID do documento e os dados
+          });
+        } catch (error) {
+          console.error("Erro ao obter dados do usuário:", error);
+        }
+      }
+
+      setAmigos(amigosData);
+      console.log(amigosData)
+    }
+
+    fetchAmigosData();
+  }, []);
+
+
 
   function AmigosComponent() {
     return (
@@ -35,7 +68,7 @@ const ChatInterface = () => {
   return (
     <Box width={'100%'} height={'100%'} display={'flex'} justifyContent={'center'} alignItems={'center'}>
       <Box display={'flex'} flexDir={'column'} alignItems={'center'} width={'95%'} height={'98%'}>
-        
+
         <Box width={'100%'}>
           <Input
             width={'100%'}
@@ -55,10 +88,36 @@ const ChatInterface = () => {
         </Box>
 
         {/* Render the box sets 5 times */}
-        {[...Array(5)].map((_, index) => renderBoxes(index))}
+        {amigos.length === 0 ? <>
+          {[...Array(5)].map((_, index) => renderBoxes(index))}
+
+        </> : <>
+          {amigos.map((request, index) => (
+            <Box onClick={() => { setGlobalState('friendchatopen', true), setGlobalState('chatfriendopenuid', request.uid) }} cursor={'pointer'} _hover={{ 'bg': '#0000001a' }} transition={'all 0.2s'}
+              width="100%" key={index} p='10px' display="flex" alignItems="center" mb="10px">
+              <Box display={'flex'} justifyContent='center' alignItems={'center'} mr="10px"
+                width="30px" height="30px" borderRadius="30px" bg={request.bgIconColor}>
+                <FaDiscord color='white' fontSize={'17px'} />
+
+              </Box>
+              <Box flex="1" mr="10px">
+                <Text color="white">{request.username}</Text>
+              </Box>
+              {/* <Box width="90px">
+                <Box justifyContent="flex-end" display="flex">
+                  <Box display="flex" justifyContent="center" alignItems="center" width="40px" height="40px" borderRadius="40px" bg="#202225">
+                    <IoChatbubbleSharp fontSize="20px" color="white" />
+                  </Box>
+
+                </Box>
+              </Box> */}
+            </Box>
+          ))}
+        </>}
       </Box>
     </Box>
   );
 };
 
 export default ChatInterface;
+
