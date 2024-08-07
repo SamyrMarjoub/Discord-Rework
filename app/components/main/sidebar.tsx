@@ -2,7 +2,7 @@ import { auth, db } from '@/db/firebase';
 import { setGlobalState, useGlobalState } from '@/globalstate';
 import { Box, Text } from '@chakra-ui/react'
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, doc, DocumentData, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, DocumentData, getDoc, getDocs, onSnapshot, query, where } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react'
 import { FaDiscord } from 'react-icons/fa'
@@ -24,8 +24,6 @@ export default function sidebar() {
     const [modal, setModal] = useState(false)
     const [modal_dois, setModal_dois] = useGlobalState("modal_open_2")
     const [SingleServData, setSingleServData] = useState({})
-    // const [canalSelected, setCanalSelected] = useState(true)
-    // const [mobileselected, setMobileSelected] = useGlobalState('mobileselected')
     const [modalOpen, setModalOpen] = useGlobalState('modalOpen')
     const [userHasServer, setUserHasServer] = useState(null)
     const [isServerSelected, setIsServerSelected] = useGlobalState('isServerSelected')
@@ -35,6 +33,8 @@ export default function sidebar() {
     const [ChannelSelectedId, SetChannelSelectedId] = useGlobalState('ChannelSelectedId');
     const [userCreatedChat, setUserCreatedChat] = useGlobalState('userCreatedChat')
     const [userMessagesMode, setMessagesMode] = useGlobalState('userMessagesMode')
+    const [userData, setUserData] = useGlobalState('userData')
+    const [DadosMsgsNotRead, setDadosMsgsNotRead] = useState(0)
 
     // Função de deslogar
     function logout() {
@@ -53,7 +53,6 @@ export default function sidebar() {
                 const docRef = doc(db, "usuarios", user.uid);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
-                    setGeneralData(docSnap.data());
                     console.log(docSnap.data())
                     setGlobalState('userData', docSnap.data())
                     const SideBarServers = async () => {
@@ -65,8 +64,10 @@ export default function sidebar() {
                                 array.push(doc.data());
                             });
                             setUserServs(array);
-
                             setUserHasServer(true)
+                            fetchUnreadMessagesCount(docSnap.data().uid)
+                            setGeneralData(docSnap.data());
+
                         } else {
                             setUserHasServer(false)
                             return console.log('Nao tem servidor')
@@ -114,14 +115,11 @@ export default function sidebar() {
 
     const getMessages = async (chatId: unknown) => {
         try {
-            // Cria a referência à coleção 'messages' e cria a consulta
             const q = query(collection(db, 'mensagens'), where('chatId', '==', chatId));
             const querySnapshot = await getDocs(q);
 
-            // Itera sobre os documentos retornados e faz o que for necessário com eles
             querySnapshot.forEach(doc => {
                 console.log(doc.id, ' => ', doc.data());
-                // Aqui você pode armazenar os dados das mensagens em um estado local, exibir na UI, etc.
             });
         } catch (error) {
             console.error('Error fetching messages for chat:', error);
@@ -188,6 +186,24 @@ export default function sidebar() {
         </Box>
     );
 
+    async function fetchUnreadMessagesCount(id: unknown) {
+        const userChatsRef = collection(db, 'chatsUsuariosPai', id, 'chatsUsuariosFilho');
+        const chatSnapshot = await getDocs(userChatsRef);
+        let totalUnreadMessages = 0;
+
+        for (const doc of chatSnapshot.docs) {
+            const chatId = doc.id;
+            const messagesRef = collection(db, 'chatsUsuariosFilho', chatId, 'mensagensUserParUser');
+            const unreadQuery = query(messagesRef, where('receiver', '==', id), where('isRead', '==', false));
+            const unreadSnapshot = await getDocs(unreadQuery);
+            totalUnreadMessages += unreadSnapshot.size;
+        }
+
+        setDadosMsgsNotRead(totalUnreadMessages);
+    }    
+
+   
+
     return (
 
         //Div Geral - Tamanho do sidebar inteiro
@@ -195,8 +211,11 @@ export default function sidebar() {
             <Box bg={'#202225'} display={'flex'} justifyContent={'center'} alignItems={'center'} height={'100%'} width={'75px'}>
                 <Box w={'80%'} height={'98%'} display={'flex'} flexDir={'column'}>
                     <Box w={'100%'} height={'58px'} position={'relative'} display={'flex'} justifyContent={'center'} >
-                        <Box _hover={{'bg':'#5865f2'}}  cursor={'pointer'} onClick={() => { [setGlobalState('userMessagesMode', true), setGlobalState('isServerSelected', false)] }} lineHeight={'center'} bg={userMessagesMode ? '#5865f2' : '#36393F'} display={'flex'} justifyContent={'center'} alignItems={'center'} borderRadius={'47px'} w={'47px'} height={'47px'}>
+                        <Box _hover={{ 'bg': '#5865f2' }} position={'relative'} cursor={'pointer'} onClick={() => { setDadosMsgsNotRead(0), [setGlobalState('userMessagesMode', true), setGlobalState('isServerSelected', false)] }} lineHeight={'center'} bg={userMessagesMode ? '#5865f2' : '#36393F'} display={'flex'} justifyContent={'center'} alignItems={'center'} borderRadius={'47px'} w={'47px'} height={'47px'}>
                             <FaDiscord color='#DCDDDE' fontSize={'25px'} />
+                            {DadosMsgsNotRead !== 0 ? <Box width={'18px'} height={'18px'} display={'flex'} justifyContent={'center'} alignItems={'center'} position={'absolute'} right={'-2px'} rounded={'18px'} bottom={'0px'} bg={'red'} color={'white'}>
+                                <Text color={'white'} fontSize={'13px'} fontWeight={'700'}>{DadosMsgsNotRead}</Text>
+                            </Box> : <></>}
                         </Box>
                         <Box width={'60%'} height={'2px'} bg={'#36393F'} position={'absolute'} bottom={'0'} left={'20%'}>
 
@@ -374,18 +393,18 @@ export default function sidebar() {
 
                     <Box display={'flex'} justifyContent={'center'} alignItems={'center'} width={'100%'} height={'50px'} bg={'#232428'}>
                         <Box display={'flex'} alignItems={'center'} width={'90%'} height={'90%'} >
-                            <Box width={'35px'} height={'35px'} display={'flex'} justifyContent={'center'} alignItems={'center'} borderRadius={'35px'} bg={generalData?.bgIconColor}>
+                            <Box width={'35px'} height={'35px'} display={'flex'} justifyContent={'center'} alignItems={'center'} borderRadius={'35px'} bg={userData?.bgIconColor}>
                                 <FaDiscord color='white' fontSize={'25px'} />
                             </Box>
                             <Box height={'full'} flex={'2'}>
                                 <Box display={'flex'} flexDir={'column'} pl='2px' width={'100%'} height={'100%'} >
-                                    <Text as={'span'} mt={'6px'} display={'inline-block'} ml={'5px'} color={'white'} fontWeight={'900'} fontSize={'13px'}>{generalData?.username}</Text>
-                                    <Text as={'span'} mt='-5px' display={'inline-block'} ml={'3px'} color={'#96989D'} fontSize={'11.5px'}>#{generalData?.uid}</Text>
+                                    <Text as={'span'} mt={'6px'} display={'inline-block'} ml={'5px'} color={'white'} fontWeight={'900'} fontSize={'13px'}>{userData?.username}</Text>
+                                    <Text as={'span'} mt='-5px' display={'inline-block'} ml={'3px'} color={'#96989D'} fontSize={'11.5px'}>#{userData?.uid}</Text>
                                 </Box>
                             </Box>
                             <Box flex={'1'} height={'full'}>
                                 <Box onClick={() => logout()} cursor={'pointer'} _hover={{ 'bg': '#36393F' }} display={'flex'} transition={'0.2s all'} justifyContent={'center'} alignItems={'center'} width={'100%'} height={'100%'}>
-                                    <FaGear  color='#96989D' fontSize={'19px'}  />
+                                    <FaGear color='#96989D' fontSize={'19px'} />
 
                                 </Box>
                             </Box>

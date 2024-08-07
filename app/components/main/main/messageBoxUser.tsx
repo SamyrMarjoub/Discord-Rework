@@ -1,7 +1,7 @@
 import { db } from '@/db/firebase';
 import { setGlobalState, useGlobalState } from '@/globalstate';
 import { Box, Input, Stack, Text } from '@chakra-ui/react';
-import { collection, doc, setDoc, updateDoc, query, orderBy, where, getDocs, serverTimestamp, onSnapshot, writeBatch, getDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, updateDoc, query, orderBy, where, getDocs, serverTimestamp, onSnapshot, writeBatch, getDoc, deleteDoc, increment } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { FaDiscord } from 'react-icons/fa';
 import { MdDelete, MdEdit } from "react-icons/md";
@@ -18,6 +18,9 @@ export default function MessageBoxUser() {
     const [editMessageId, setEditMessageId] = useState(null);
     const [isEditingMessage, setIsEditingMessage] = useState(null)
     const [messageEdited, setMessageEdited] = useState('')
+    const [unreadMessages, setUnreadMessages] = useState({});
+    // const [friendchatOpen, setFriendchatopen] = useGlobalState('friendchatopen')
+
     const pattern = 'A0f'
     const len = 10
 
@@ -57,6 +60,9 @@ export default function MessageBoxUser() {
             const unsubscribe = onSnapshot(q, (querySnapshot) => {
                 const messagesList = querySnapshot.docs.map(doc => doc.data());
                 setMessages(messagesList);
+                // updateUnreadMessages(messagesList);
+                markMessagesAsRead(chatId, messagesList);
+
             });
 
             // Clean up the listener on unmount
@@ -69,32 +75,30 @@ export default function MessageBoxUser() {
     async function getOrCreateChat() {
         const userId1 = userData.uid;
         const userId2 = frienduserData.uid;
-        const id = randomId(7, pattern)
 
-        const userChatsRef = collection(db, 'chatsUsuariosPai', userId1, 'chatsUsuariosFilho');
-        const q = query(userChatsRef, where('chatRef', '!=', null));
-        const querySnapshot = await getDocs(q);
+        const combinedId = userId1 > userId2 ? `${userId1}_${userId2}` : `${userId2}_${userId1}`;
+        const chatRef = doc(db, 'chatsUsuariosFilho', combinedId);
 
-        for (let doc of querySnapshot.docs) {
-            const chatData = await getDoc(doc.data().chatRef);
-            if (chatData.exists() && ((chatData.data().user1 === userId1 && chatData.data().user2 === userId2) ||
-                (chatData.data().user1 === userId2 && chatData.data().user2 === userId1))) {
-                return chatData.id;
-            }
+        const chatSnapshot = await getDoc(chatRef);
+
+        if (chatSnapshot.exists()) {
+            return chatRef.id;
         }
 
         const batch = writeBatch(db);
-        const chatRef = doc(collection(db, 'chatsUsuariosFilho'));
+        const id = randomId(7, pattern);
+
         batch.set(chatRef, {
             id: id,
             user1: userId1,
             user2: userId2,
             lastMessage: '',
-            timestamp: serverTimestamp()
+            timestamp: serverTimestamp(),
+          
         });
 
-        const user1ChatRef = doc(collection(db, 'chatsUsuariosPai', userId1, 'chatsUsuariosFilho'), chatRef.id);
-        const user2ChatRef = doc(collection(db, 'chatsUsuariosPai', userId2, 'chatsUsuariosFilho'), chatRef.id);
+        const user1ChatRef = doc(collection(db, 'chatsUsuariosPai', userId1, 'chatsUsuariosFilho'), combinedId);
+        const user2ChatRef = doc(collection(db, 'chatsUsuariosPai', userId2, 'chatsUsuariosFilho'), combinedId);
         batch.set(user1ChatRef, { chatRef });
         batch.set(user2ChatRef, { chatRef });
 
@@ -102,6 +106,7 @@ export default function MessageBoxUser() {
 
         return chatRef.id;
     }
+
 
     async function sendMessage(chatId: string, senderId: any, receiverId: any, message: string) {
 
@@ -122,7 +127,9 @@ export default function MessageBoxUser() {
             message: message,
             timestamp: serverTimestamp(),
             originalTimestamp: originalTimestamp,
-            isEdited: false // Mensagem nova não é editada
+            isEdited: false, // Mensagem nova não é editada,            
+            isRead: false, // Mensagem nova não é lida,
+
 
         });
 
@@ -131,6 +138,7 @@ export default function MessageBoxUser() {
             lastMessage: message,
             timestamp: serverTimestamp()
         });
+        
 
     }
     async function getMessageRefById(chatId: string, id: unknown) {
@@ -243,6 +251,37 @@ export default function MessageBoxUser() {
         }
     };
 
+    async function markMessagesAsRead(chatId, messagesList) {
+        const batch = writeBatch(db);
+
+        for (const msg of messagesList) {
+            if (msg.receiver === userData.uid && !msg.isRead) {
+                try {
+                    // Obtém a referência do documento da mensagem
+                    const messagesRef = collection(db, 'chatsUsuariosFilho', chatId, 'mensagensUserParUser');
+                    const q = query(messagesRef, where('id', '==', msg.id));
+                    const querySnapshot = await getDocs(q);
+
+                    if (!querySnapshot.empty) {
+                        const messageRef = querySnapshot.docs[0].ref;
+                        batch.update(messageRef, { isRead: true });
+                    } else {
+                        console.error(`Mensagem com ID ${msg.id} não encontrada para marcação como lida.`);
+                    }
+                } catch (error) {
+                    console.error(`Erro ao tentar marcar mensagem ${msg.id} como lida:`, error);
+                }
+            }
+        }
+
+        try {
+            await batch.commit();
+            console.log('Mensagens marcadas como lidas com sucesso.');
+            
+        } catch (error) {
+            console.error('Erro ao realizar batch commit:', error);
+        }
+    }
 
     return (
         <Box
@@ -263,7 +302,15 @@ export default function MessageBoxUser() {
                 width="100%"
                 p="4"
             >
+
                 <Stack spacing="3">
+
+                    <Box display={'flex'} justifyContent={'center'} alignItems={'center'} width={'80px'} bg={frienduserData.bgIconColor} height={'80px'} borderRadius={'80px'}>
+                        <FaDiscord fontSize={'45px'} color='white' />
+                    </Box>
+                    <Text fontSize={'25px'} color={'white'} fontWeight={'800'}>{frienduserData.username}</Text>
+                    <Text fontSize={'15px'} mt={'-5px'} color={'#96989D'}>Esse é o começo de sua conversa inesquecivel com <Text as={'span'} color={'white'}>{frienduserData.username}</Text></Text>
+                    <Box width={'100%'} bg='#2b2d31' height={'1px'}></Box>
                     {messages.map((msg, index) => (
                         <Box
                             w={'100%'}
