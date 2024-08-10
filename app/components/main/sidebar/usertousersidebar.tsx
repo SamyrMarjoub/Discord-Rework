@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Input, Text } from '@chakra-ui/react';
-import { IoAddSharp, IoChatbubbleSharp } from 'react-icons/io5';
+import { IoAddSharp } from 'react-icons/io5';
 import { FaDiscord, FaUserFriends } from "react-icons/fa";
 import { db } from '@/db/firebase';
 import { setGlobalState, useGlobalState } from '@/globalstate';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 
 const ChatInterface = () => {
-  const [userData, setUserData] = useGlobalState('userData');
-
+  const [userData] = useGlobalState('userData');
+  const [userMessagesMode] = useGlobalState('userMessagesMode');
+  const [chatsNumberMessageNotRead, setChatsNumberMessageNotRead] = useGlobalState('chatsNumberMessageNotRead');
+  const [totalNumberMessageNotRead] = useGlobalState('totalNumberMessageNotRead');
   const [amigos, setAmigos] = useState([]);
 
   useEffect(() => {
@@ -16,27 +18,37 @@ const ChatInterface = () => {
       const amigosData = [];
       const amigosCollection = collection(db, "usuarios"); // Coleção de usuários
 
-      for (const uid of userData.friends) {
-        const q = query(amigosCollection, where("uid", "==", uid)); // Consulta para o campo 'uid'
+      if (userData.friends) {
+        for (const uid of userData.friends) {
+          const q = query(amigosCollection, where("uid", "==", uid)); // Consulta para o campo 'uid'
 
-        try {
-          const querySnapshot = await getDocs(q);
-          querySnapshot.forEach(doc => {
-            amigosData.push({ id: doc.id, ...doc.data() }); // Adiciona o ID do documento e os dados
-          });
-        } catch (error) {
-          console.error("Erro ao obter dados do usuário:", error);
+          try {
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach(doc => {
+              amigosData.push({ id: doc.id, ...doc.data() }); // Adiciona o ID do documento e os dados
+            });
+          } catch (error) {
+            console.error("Erro ao obter dados do usuário:", error);
+          }
         }
-      }
 
-      setAmigos(amigosData);
-      console.log(amigosData)
+        setAmigos(amigosData);
+        console.log('Dados dos amigos:', amigosData);
+      } else {
+        console.log('Sem amigos');
+      }
     }
 
     fetchAmigosData();
-  }, []);
+  }, [userData.friends]);
 
+  useEffect(() => {
+    console.log('Modo de mensagens do usuário:', userMessagesMode);
+  }, [userMessagesMode]);
 
+  useEffect(() => {
+    console.log('chatsNumberMessageNotRead:', chatsNumberMessageNotRead);
+  }, [chatsNumberMessageNotRead]);
 
   function AmigosComponent() {
     return (
@@ -46,10 +58,8 @@ const ChatInterface = () => {
           <Text ml="20px" color="white">Amigos</Text>
         </Box>
       </Box>
-
-    )
+    );
   }
-
 
   const renderBoxes = (index) => {
     const initialTransparency = 0.1; // Initial transparency
@@ -68,7 +78,6 @@ const ChatInterface = () => {
   return (
     <Box width={'100%'} height={'100%'} display={'flex'} justifyContent={'center'} alignItems={'center'}>
       <Box display={'flex'} flexDir={'column'} alignItems={'center'} width={'95%'} height={'98%'}>
-
         <Box width={'100%'}>
           <Input
             width={'100%'}
@@ -87,37 +96,82 @@ const ChatInterface = () => {
           <IoAddSharp fontWeight={'700'} color='white' fontSize={'15px'} />
         </Box>
 
-        {/* Render the box sets 5 times */}
-        {amigos.length === 0 ? <>
-          {[...Array(5)].map((_, index) => renderBoxes(index))}
+        {amigos.length === 0 ? (
+          [...Array(5)].map((_, index) => renderBoxes(index))
+        ) : (
+          amigos.map((request, index) => {
+            const userUID = String(userData.uid); 
+            const friendUID = String(request.uid); 
 
-        </> : <>
-          {amigos.map((request, index) => (
-            <Box onClick={() => { setGlobalState('friendchatopen', true), setGlobalState('chatfriendopenuid', request.uid) }} cursor={'pointer'} _hover={{ 'bg': '#0000001a' }} transition={'all 0.2s'}
-              width="100%" key={index} p='10px' display="flex" alignItems="center" mb="10px">
-              <Box display={'flex'} justifyContent='center' alignItems={'center'} mr="10px"
-                width="30px" height="30px" borderRadius="30px" bg={request.bgIconColor}>
-                <FaDiscord color='white' fontSize={'17px'} />
+            // Construindo a chave do chat
+            const possibleKeys = [`${userUID}_${friendUID}`, `${friendUID}_${userUID}`];
+            const messageCount = chatsNumberMessageNotRead[possibleKeys[0]] || chatsNumberMessageNotRead[possibleKeys[1]];
 
-              </Box>
-              <Box flex="1" mr="10px">
-                <Text color="white">{request.username}</Text>
-              </Box>
-              {/* <Box width="90px">
-                <Box justifyContent="flex-end" display="flex">
-                  <Box display="flex" justifyContent="center" alignItems="center" width="40px" height="40px" borderRadius="40px" bg="#202225">
-                    <IoChatbubbleSharp fontSize="20px" color="white" />
-                  </Box>
+            return (
+              <Box
+                onClick={() => {
+                  setGlobalState('friendchatopen', true);
+                  setGlobalState('chatfriendopenuid', request.uid);
 
+                  // Atualizando o contador de mensagens não lidas
+                  setChatsNumberMessageNotRead((prev) => ({
+                    ...prev,
+                    [possibleKeys[0]]: 0,
+                    [possibleKeys[1]]: 0,
+                  }));
+                }}
+                cursor={'pointer'}
+                _hover={{ 'bg': '#0000001a' }}
+                transition={'all 0.2s'}
+                width="100%"
+                key={index}
+                p='10px'
+                display="flex"
+                alignItems="center"
+                mb="10px"
+              >
+                <Box
+                  display={'flex'}
+                  justifyContent='center'
+                  alignItems={'center'}
+                  mr="10px"
+                  width="30px"
+                  height="30px"
+                  borderRadius="30px"
+                  bg={request.bgIconColor}
+                  position="relative"
+                >
+                  <FaDiscord color='white' fontSize={'17px'} />
+                  {messageCount > 0 && (
+                    <Box
+                      width={'15px'}
+                      height={'15px'}
+                      display={'flex'}
+                      justifyContent={'center'}
+                      alignItems={'center'}
+                      position={'absolute'}
+                      right={'-2px'}
+                      rounded={'15px'}
+                      bottom={'-2px'}
+                      bg={'red'}
+                      color={'white'}
+                    >
+                      <Text color={'white'} fontSize={'13px'} fontWeight={'700'}>
+                        {messageCount}
+                      </Text>
+                    </Box>
+                  )}
                 </Box>
-              </Box> */}
-            </Box>
-          ))}
-        </>}
+                <Box flex="1" mr="10px">
+                  <Text color="white">{request.username}</Text>
+                </Box>
+              </Box>
+            );
+          })
+        )}
       </Box>
     </Box>
   );
 };
 
 export default ChatInterface;
-

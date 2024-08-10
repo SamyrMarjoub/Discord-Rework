@@ -35,6 +35,7 @@ export default function sidebar() {
     const [userMessagesMode, setMessagesMode] = useGlobalState('userMessagesMode')
     const [userData, setUserData] = useGlobalState('userData')
     const [DadosMsgsNotRead, setDadosMsgsNotRead] = useState(0)
+    const [NumberMessageNotRead, setNumberMessageNotRead] = useState(0)
 
     // Função de deslogar
     function logout() {
@@ -45,7 +46,6 @@ export default function sidebar() {
         window.location.reload()
     }
 
-    // funcção de pegar as informações do usuario logado
     async function getUserData() {
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -53,24 +53,82 @@ export default function sidebar() {
                 const docRef = doc(db, "usuarios", user.uid);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
-                    console.log(docSnap.data())
-                    setGlobalState('userData', docSnap.data())
+                    console.log(docSnap.data());
+                    setGlobalState('userData', docSnap.data());
+
                     const SideBarServers = async () => {
                         if (docSnap.data().servs.length !== 0) {
                             const q = query(collection(db, "servidores"), where("id", "in", docSnap.data().servs));
                             const querySnapshot = await getDocs(q);
-                            const array: ((prevState: never[]) => never[]) | DocumentData[] = [];
+                            const array = [];
                             querySnapshot.forEach((doc) => {
                                 array.push(doc.data());
                             });
                             setUserServs(array);
-                            setUserHasServer(true)
-                            fetchUnreadMessagesCount(docSnap.data().uid)
+                            setUserHasServer(true);
                             setGeneralData(docSnap.data());
 
+                            const userId = docSnap.data().uid;
+                            const chatsRef = collection(db, "chatsUsuariosFilho");
+
+                            // Query para pegar todos os chats onde user1 ou user2 é igual ao userId
+                            const queryUser1 = query(chatsRef, where("user1", "==", userId));
+                            const queryUser2 = query(chatsRef, where("user2", "==", userId));
+
+                            // Função para buscar as mensagens de um chat
+                            async function getMessages(chatId) {
+                                const messagesRef = collection(db, `chatsUsuariosFilho/${chatId}/mensagensUserParUser`);
+                                const messagesSnapshot = await getDocs(messagesRef);
+                                const messages = [];
+                                let unreadMessagesCount = 0;
+
+                                messagesSnapshot.forEach((messageDoc) => {
+                                    const messageData = { id: messageDoc.id, ...messageDoc.data() };
+                                    messages.push(messageData);
+
+                                    // Contabiliza as mensagens não lidas apenas se o usuário atual for o destinatário
+                                    if (!messageData.isRead && messageData.receiver === userId) {
+                                        unreadMessagesCount++;
+                                    }
+                                });
+
+                                return { messages, unreadMessagesCount };
+                            }
+
+                            const processChats = async (querySnapshot) => {
+                                const chatsWithMessages = [];
+                                const unreadMessagesByChat = {};
+                                let totalUnreadMessages = 0;
+
+                                for (const docSnapshot of querySnapshot.docs) {
+                                    const chatData = { id: docSnapshot.id, ...docSnapshot.data() };
+                                    const { messages, unreadMessagesCount } = await getMessages(docSnapshot.id);
+                                    chatsWithMessages.push({ chat: chatData, messages: messages });
+
+                                    // Armazena a contagem de mensagens não lidas por chat
+                                    unreadMessagesByChat[docSnapshot.id] = unreadMessagesCount;
+                                    totalUnreadMessages += unreadMessagesCount;
+                                    console.log("Total de mensagens não lidas em todos os chats:", totalUnreadMessages);
+
+                                }
+
+                                // Exibe a quantidade de mensagens não lidas por chat
+                                console.log("Mensagens não lidas por chat:", unreadMessagesByChat);
+                                setNumberMessageNotRead(totalUnreadMessages)
+                                setGlobalState('totalNumberMessageNotRead', totalUnreadMessages)
+                                setGlobalState('chatsNumberMessageNotRead', unreadMessagesByChat)
+                                // Exibe os chats e mensagens encontrados
+                                // console.log("Atualização nos chats e mensagens:", chatsWithMessages);
+                            };
+
+                            // Listener para chats onde user1 é igual ao userId
+                            onSnapshot(queryUser1, processChats);
+
+                            // Listener para chats onde user2 é igual ao userId
+                            onSnapshot(queryUser2, processChats);
                         } else {
-                            setUserHasServer(false)
-                            return console.log('Nao tem servidor')
+                            setUserHasServer(false);
+                            console.log('Não tem servidor');
                         }
                     };
                     SideBarServers();
@@ -78,11 +136,18 @@ export default function sidebar() {
                     console.log("No such document!");
                 }
             } else {
-                console.log('deslogado')
+                console.log('Deslogado');
             }
         });
-        console.log('foi');
+        console.log('Foi');
     }
+
+
+    useEffect(() => {
+        console.log(NumberMessageNotRead)
+    }, [NumberMessageNotRead])
+
+
 
     // função de pegar os chats do servidor selecionado
     const getChats = async (ServerId) => {
@@ -138,7 +203,13 @@ export default function sidebar() {
         setGlobalState('ChannelSelectedId', '')
         setGlobalState('userMessagesMode', false)
         setGlobalState('friendchatopen', false)
+        setGlobalState('chatfriendopenuid', null)
+
     }
+
+    useEffect(() => {
+        console.log(userMessagesMode)
+    }, [userMessagesMode])
 
     // Função pra abrir ou fechar o modal
     function modalSwitch() {
@@ -184,25 +255,8 @@ export default function sidebar() {
             <Box className="w-[18px] mr-2 rounded-full h-[18px] bg-[#4F545C]"></Box>
             <Box className="rounded-[7px] bg-[#4F545C]" style={{ width, height: '18px' }}></Box>
         </Box>
-    );
+    )
 
-    async function fetchUnreadMessagesCount(id: unknown) {
-        const userChatsRef = collection(db, 'chatsUsuariosPai', id, 'chatsUsuariosFilho');
-        const chatSnapshot = await getDocs(userChatsRef);
-        let totalUnreadMessages = 0;
-
-        for (const doc of chatSnapshot.docs) {
-            const chatId = doc.id;
-            const messagesRef = collection(db, 'chatsUsuariosFilho', chatId, 'mensagensUserParUser');
-            const unreadQuery = query(messagesRef, where('receiver', '==', id), where('isRead', '==', false));
-            const unreadSnapshot = await getDocs(unreadQuery);
-            totalUnreadMessages += unreadSnapshot.size;
-        }
-
-        setDadosMsgsNotRead(totalUnreadMessages);
-    }    
-
-   
 
     return (
 
@@ -211,10 +265,10 @@ export default function sidebar() {
             <Box bg={'#202225'} display={'flex'} justifyContent={'center'} alignItems={'center'} height={'100%'} width={'75px'}>
                 <Box w={'80%'} height={'98%'} display={'flex'} flexDir={'column'}>
                     <Box w={'100%'} height={'58px'} position={'relative'} display={'flex'} justifyContent={'center'} >
-                        <Box _hover={{ 'bg': '#5865f2' }} position={'relative'} cursor={'pointer'} onClick={() => { setDadosMsgsNotRead(0), [setGlobalState('userMessagesMode', true), setGlobalState('isServerSelected', false)] }} lineHeight={'center'} bg={userMessagesMode ? '#5865f2' : '#36393F'} display={'flex'} justifyContent={'center'} alignItems={'center'} borderRadius={'47px'} w={'47px'} height={'47px'}>
+                        <Box _hover={{ 'bg': '#5865f2' }} position={'relative'} cursor={'pointer'} onClick={() => { setNumberMessageNotRead(0), [setGlobalState('userMessagesMode', true), setGlobalState('isServerSelected', false)] }} lineHeight={'center'} bg={userMessagesMode ? '#5865f2' : '#36393F'} display={'flex'} justifyContent={'center'} alignItems={'center'} borderRadius={'47px'} w={'47px'} height={'47px'}>
                             <FaDiscord color='#DCDDDE' fontSize={'25px'} />
-                            {DadosMsgsNotRead !== 0 ? <Box width={'18px'} height={'18px'} display={'flex'} justifyContent={'center'} alignItems={'center'} position={'absolute'} right={'-2px'} rounded={'18px'} bottom={'0px'} bg={'red'} color={'white'}>
-                                <Text color={'white'} fontSize={'13px'} fontWeight={'700'}>{DadosMsgsNotRead}</Text>
+                            {NumberMessageNotRead !== 0 ? <Box width={'18px'} height={'18px'} display={'flex'} justifyContent={'center'} alignItems={'center'} position={'absolute'} right={'-2px'} rounded={'18px'} bottom={'0px'} bg={'red'} color={'white'}>
+                                <Text color={'white'} fontSize={'13px'} fontWeight={'700'}>{NumberMessageNotRead}</Text>
                             </Box> : <></>}
                         </Box>
                         <Box width={'60%'} height={'2px'} bg={'#36393F'} position={'absolute'} bottom={'0'} left={'20%'}>

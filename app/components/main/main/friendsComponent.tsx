@@ -100,10 +100,10 @@ export default function friendsComponent() {
                         <Box mt="10px" width="100%" height="1px" bg="#525254">
                         </Box>
 
-                        <Box display="flex" width="100%">
+                        <Box display="flex" width="100%" flexDir={'column'}>
                             {amigos.map((request, index) => (
                                 <Box onClick={()=>{setGlobalState('friendchatopen',true), setGlobalState('chatfriendopenuid', request.uid)}} borderBottom={'1px solid #525254'} cursor={'pointer'} _hover={{ 'bg': '#0000001a' }} transition={'all 0.2s'}
-                                    width="100%" key={index} p='10px' display="flex" alignItems="center" mb="10px">
+                                    width="100%" key={index} p='10px' display="flex" alignItems="center" mb="0px">
                                     <Box display={'flex'} justifyContent='center' alignItems={'center'} mr="10px"
                                         width="40px" height="40px" borderRadius="40px" bg={request.bgIconColor}>
                                         <FaDiscord color='white' fontSize={'20px'} />
@@ -192,6 +192,7 @@ export default function friendsComponent() {
                     });
 
                     console.log("Friend request accepted.");
+                    getPendingFriendRequests()
                 } else {
                     // Remove the friend request from the current user's pending friend requests
                     await updateDoc(userDocRef, {

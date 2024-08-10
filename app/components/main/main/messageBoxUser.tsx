@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { FaDiscord } from 'react-icons/fa';
 import { MdDelete, MdEdit } from "react-icons/md";
 import randomId from 'random-id'
+import { useRef } from 'react';
 
 export default function MessageBoxUser() {
     const [messages, setMessages] = useState([]);
@@ -19,7 +20,8 @@ export default function MessageBoxUser() {
     const [isEditingMessage, setIsEditingMessage] = useState(null)
     const [messageEdited, setMessageEdited] = useState('')
     const [unreadMessages, setUnreadMessages] = useState({});
-    // const [friendchatOpen, setFriendchatopen] = useGlobalState('friendchatopen')
+    const [friendchatOpen, setFriendchatopen] = useGlobalState('friendchatopen')
+    const [userMessagesMode, setUserMessageMode] = useGlobalState('userMessagesMode')
 
     const pattern = 'A0f'
     const len = 10
@@ -46,31 +48,48 @@ export default function MessageBoxUser() {
         fetchFriendData();
     }, [friendtargetUid]);
 
-    useEffect(() => {
-        async function loadChat() {
-            if (!userData?.uid || !frienduserData?.uid) return;
 
-            const chatId = await getOrCreateChat();
-            setChatId(chatId);
+useEffect(() => {
+    let unsubscribe;
+    let isMounted = true; // Track if the component is mounted
 
-            const messagesRef = collection(db, 'chatsUsuariosFilho', chatId, 'mensagensUserParUser');
-            const q = query(messagesRef, orderBy('originalTimestamp', 'asc'));
+    async function loadChat() {
+        if (!userData?.uid || !frienduserData?.uid) return;
 
+        const chatId = await getOrCreateChat();
+        setChatId(chatId);
+
+        const messagesRef = collection(db, 'chatsUsuariosFilho', chatId, 'mensagensUserParUser');
+        const q = query(messagesRef, orderBy('originalTimestamp', 'asc'));
+
+        if (userMessagesMode) {
             // Listen for real-time updates
-            const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            unsubscribe = onSnapshot(q, (querySnapshot) => {
                 const messagesList = querySnapshot.docs.map(doc => doc.data());
-                setMessages(messagesList);
-                // updateUnreadMessages(messagesList);
-                markMessagesAsRead(chatId, messagesList);
-
+                if (isMounted) { // Check if component is still mounted
+                    setMessages(messagesList);
+                    // updateUnreadMessages(messagesList);
+                    markMessagesAsRead(chatId, messagesList);
+                }
             });
-
-            // Clean up the listener on unmount
-            return () => unsubscribe();
+        } else {
+            console.log('null');
         }
+    }
 
-        loadChat();
-    }, [userData, frienduserData]);
+    loadChat();
+
+    // Clean up the listener on unmount
+    return () => {
+        isMounted = false; // Mark the component as unmounted
+        if (unsubscribe) {
+            unsubscribe();
+        }
+    };
+}, [userData, frienduserData, userMessagesMode]);
+
+    
+    
 
     async function getOrCreateChat() {
         const userId1 = userData.uid;
@@ -94,7 +113,7 @@ export default function MessageBoxUser() {
             user2: userId2,
             lastMessage: '',
             timestamp: serverTimestamp(),
-          
+
         });
 
         const user1ChatRef = doc(collection(db, 'chatsUsuariosPai', userId1, 'chatsUsuariosFilho'), combinedId);
@@ -138,7 +157,7 @@ export default function MessageBoxUser() {
             lastMessage: message,
             timestamp: serverTimestamp()
         });
-        
+
 
     }
     async function getMessageRefById(chatId: string, id: unknown) {
@@ -275,22 +294,29 @@ export default function MessageBoxUser() {
         }
 
         try {
-            await batch.commit();
-            console.log('Mensagens marcadas como lidas com sucesso.');
-            
+            if (!userMessagesMode) {
+                console.log('Cai fora');
+
+            } else {
+                await batch.commit();
+                console.log('Mensagens marcadas como lidas com sucesso.');
+
+            }
+
         } catch (error) {
             console.error('Erro ao realizar batch commit:', error);
         }
     }
-
-    return (
+    
+    return !userMessagesMode ? (
+        <></>
+    ) : (
         <Box
             height={["calc(100vh - 50px)"]}
             display="flex"
             flexDirection="column"
             overflow="hidden"
             width="100%"
-
         >
             <Box
                 css={scrollStyle}
@@ -302,98 +328,127 @@ export default function MessageBoxUser() {
                 width="100%"
                 p="4"
             >
-
                 <Stack spacing="3">
-
-                    <Box display={'flex'} justifyContent={'center'} alignItems={'center'} width={'80px'} bg={frienduserData.bgIconColor} height={'80px'} borderRadius={'80px'}>
-                        <FaDiscord fontSize={'45px'} color='white' />
+                    <Box
+                        display="flex"
+                        justifyContent="center"
+                        alignItems="center"
+                        width="80px"
+                        bg={frienduserData.bgIconColor}
+                        height="80px"
+                        borderRadius="80px"
+                    >
+                        <FaDiscord fontSize="45px" color="white" />
                     </Box>
-                    <Text fontSize={'25px'} color={'white'} fontWeight={'800'}>{frienduserData.username}</Text>
-                    <Text fontSize={'15px'} mt={'-5px'} color={'#96989D'}>Esse é o começo de sua conversa inesquecivel com <Text as={'span'} color={'white'}>{frienduserData.username}</Text></Text>
-                    <Box width={'100%'} bg='#2b2d31' height={'1px'}></Box>
+                    <Text fontSize="25px" color="white" fontWeight="800">
+                        {frienduserData.username}
+                    </Text>
+                    <Text fontSize="15px" mt="-5px" color="#96989D">
+                        Esse é o começo de sua conversa inesquecível com{" "}
+                        <Text as="span" color="white">
+                            {frienduserData.username}
+                        </Text>
+                    </Text>
+                    <Box width="100%" bg="#2b2d31" height="1px" />
                     {messages.map((msg, index) => (
                         <Box
-                            w={'100%'}
-                            height={'auto'}
-                            minH={'55px'}
-                            display={'flex'}
+                            w="100%"
+                            height="auto"
+                            minH="55px"
+                            display="flex"
                             key={index}
                             onMouseEnter={() => setHoveredIndex(index)}
                             onMouseLeave={() => setHoveredIndex(null)}
-                            _hover={{ 'bg': '#2b2d31' }}
-                            alignItems={'center'}
-                            transition={'0.1s all'}
+                            _hover={{ bg: '#2b2d31' }}
+                            alignItems="center"
+                            transition="0.1s all"
                             bg={isEditingMessage === index ? '#2b2d31' : 'transparent'}
                         >
-                            <Box display={'flex'} justifyContent={'center'} alignItems={'center'} width={'70px'} height={'55px'}>
+                            <Box display="flex" justifyContent="center" alignItems="center" width="70px" height="55px">
                                 <Box
                                     bg={msg.sender === userData.uid ? userData.bgIconColor : frienduserData.bgIconColor}
-                                    height={'40px'}
-                                    width={'40px'}
-                                    borderRadius={'40px'}
-                                    display={'flex'}
-                                    justifyContent={'center'}
-                                    alignItems={'center'}
-                                    mb={'3px'}
+                                    height="40px"
+                                    width="40px"
+                                    borderRadius="40px"
+                                    display="flex"
+                                    justifyContent="center"
+                                    alignItems="center"
+                                    mb="3px"
                                 >
-                                    <FaDiscord fontSize={'25px'} color='white' />
+                                    <FaDiscord fontSize="25px" color="white" />
                                 </Box>
                             </Box>
-                            <Box flex={'1'} height={'100%'}>
-                                <Box width={'100%'} display={'flex'} flexDir={'column'} justifyItems={'center'} height={'100%'}>
-                                    <Text color={'white'} as={'span'}>
+                            <Box flex="1" height="100%">
+                                <Box width="100%" display="flex" flexDir="column" justifyItems="center" height="100%">
+                                    <Text color="white" as="span">
                                         {msg.sender === userData.uid ? userData.username : frienduserData.username}
-                                        <Text ml={'10px'} as={'span'} fontSize={'14px'} color={'#96989D'}>
+                                        <Text ml="10px" as="span" fontSize="14px" color="#96989D">
                                             {formatTimestamp(msg.timestamp)}
                                         </Text>
                                     </Text>
-
                                     {isEditingMessage === index ? (
-                                        <Box height={'60px'}>
-                                            <Input padding={'0px'} _focusVisible={{ 'border': 'none' }} outline={'none'} color={'white'} bg='#2b2d31' border={'none'} onChange={(e) => setMessageEdited(e.target.value)} value={messageEdited} onKeyDown={(event) => handleKeyDown(event, 'edit')} />
-                                            <Stack flexDir={'row'}>
-                                                <Text cursor={'pointer'} fontSize={'11px'} color={'white'} onClick={() => [setHoveredIndex(null), console.log(hoveredIndex), setIsEditingMessage(false)]}>Cancelar</Text>
-                                                <Text cursor={'pointer'} fontSize={'11px'} onClick={(event) => handleAction('edit')} color={'#00AFF4'}>Enviar</Text>
+                                        <Box height="60px">
+                                            <Input
+                                                padding="0px"
+                                                _focusVisible={{ border: 'none' }}
+                                                outline="none"
+                                                color="white"
+                                                bg="#2b2d31"
+                                                border="none"
+                                                onChange={(e) => setMessageEdited(e.target.value)}
+                                                value={messageEdited}
+                                                onKeyDown={(event) => handleKeyDown(event, 'edit')}
+                                            />
+                                            <Stack flexDir="row">
+                                                <Text
+                                                    cursor="pointer"
+                                                    fontSize="11px"
+                                                    color="white"
+                                                    onClick={() => [setHoveredIndex(null), console.log(hoveredIndex), setIsEditingMessage(false)]}
+                                                >
+                                                    Cancelar
+                                                </Text>
+                                                <Text
+                                                    cursor="pointer"
+                                                    fontSize="11px"
+                                                    onClick={(event) => handleAction('edit')}
+                                                    color="#00AFF4"
+                                                >
+                                                    Enviar
+                                                </Text>
                                             </Stack>
-
-
                                         </Box>
                                     ) : (
-                                        <>
-                                            <Text mb={'-2px'} fontSize={'16px'} color={'#96989D'}>
-                                                {msg.message}
-                                                {msg.isEdited && <Text as="span" fontSize={'11px'} color={'#00AFF4'}> (editado)</Text>}
-
-                                            </Text>
-                                        </>
+                                        <Text mb="-2px" fontSize="16px" color="#96989D">
+                                            {msg.message}
+                                            {msg.isEdited && <Text as="span" fontSize="11px" color="#00AFF4"> (editado)</Text>}
+                                        </Text>
                                     )}
-
                                 </Box>
                             </Box>
                             {hoveredIndex === index && !isEditingMessage && msg.sender === userData.uid && (
                                 <>
                                     <MdDelete
-                                        cursor={'pointer'}
-                                        color='#96989D'
+                                        cursor="pointer"
+                                        color="#96989D"
                                         onClick={() => deleteMessage(chatId, msg.id)}
-                                        fontSize={'20px'}
-                                        style={{ 'marginRight': '10px' }}
+                                        fontSize="20px"
+                                        style={{ marginRight: '10px' }}
                                     />
                                     <MdEdit
-                                        style={{ 'marginRight': '10px' }}
+                                        style={{ marginRight: '10px' }}
                                         onClick={() => handleEditMessage(msg.id, msg.message, index)}
-                                        cursor={'pointer'}
-                                        color='#96989D'
-                                        fontSize={'20px'}
+                                        cursor="pointer"
+                                        color="#96989D"
+                                        fontSize="20px"
                                     />
                                 </>
                             )}
-
                         </Box>
                     ))}
                 </Stack>
             </Box>
-            <Box p="4" pt={'0px'}>
+            <Box p="4" pt="0px">
                 <Input
                     bg="#383a40"
                     placeholder="Digite sua mensagem..."
@@ -408,6 +463,8 @@ export default function MessageBoxUser() {
             </Box>
         </Box>
     );
+    
+    
 }
 
 
