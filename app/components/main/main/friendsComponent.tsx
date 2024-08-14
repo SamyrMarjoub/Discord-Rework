@@ -2,7 +2,7 @@ import { Box, Text, Stack, Button, Input, InputGroup, InputRightElement } from '
 import React, { useEffect, useState } from 'react'
 import { FaDiscord, FaUserFriends } from "react-icons/fa";
 import { db } from '@/db/firebase';
-import { getFirestore, collection, query, where, getDocs, doc, updateDoc, arrayUnion, arrayRemove, getDoc, DocumentData, setDoc } from "firebase/firestore";
+import { getFirestore, collection, query, where, getDocs, doc, updateDoc, arrayUnion, arrayRemove, getDoc, DocumentData, setDoc, onSnapshot } from "firebase/firestore";
 import { setGlobalState, useGlobalState } from '@/globalstate';
 import { MdCheck, MdClose } from "react-icons/md";
 import Image from 'next/image';
@@ -11,13 +11,57 @@ import disponivel from '@/public/disponivel.svg'
 import blocked from '@/public/bloqueado.svg'
 import { IoChatbubbleSharp } from "react-icons/io5";
 import { useToast } from '@chakra-ui/react'
+import { FaCircle } from "react-icons/fa6";
 
 export default function friendsComponent() {
-    const [selected, setSelected] = useState(0)
+    const [selected, setSelected] = useState(5)
     const [userData, setUserData] = useGlobalState('userData')
     const [friendchatopen, setFriendChatOpen] = useGlobalState('friendchatopen')
 
     const toast = useToast()
+
+    const [amigos, setAmigos] = useState([]);
+
+    useEffect(() => {
+        const unsubscribeList = []; // Lista para armazenar os unsubscribe de cada snapshot
+
+        function fetchAmigosData() {
+            const amigosData = [];
+            const amigosCollection = collection(db, "usuarios"); // Coleção de usuários
+
+            userData.friends.forEach(uid => {
+                const q = query(amigosCollection, where("uid", "==", uid)); // Consulta para o campo 'uid'
+
+                const unsubscribe = onSnapshot(q, (querySnapshot) => {
+                    querySnapshot.forEach(doc => {
+                        // Verifica se o documento já está na lista para evitar duplicações
+                        const index = amigosData.findIndex(amigo => amigo.id === doc.id);
+                        if (index !== -1) {
+                            // Atualiza o documento existente
+                            amigosData[index] = { id: doc.id, ...doc.data() };
+                        } else {
+                            // Adiciona um novo documento
+                            amigosData.push({ id: doc.id, ...doc.data() });
+                        }
+                    });
+                    setAmigos([...amigosData]); // Atualiza o estado com uma cópia do array
+                    console.log(amigosData);
+                    setGlobalState('friendsAllData', amigosData)
+                }, (error) => {
+                    console.error("Erro ao obter dados do usuário:", error);
+                });
+
+                unsubscribeList.push(unsubscribe); // Adiciona o unsubscribe para ser limpo depois
+            });
+        }
+
+        fetchAmigosData();
+
+        return () => {
+            // Limpa os snapshots ao desmontar o componente
+            unsubscribeList.forEach(unsubscribe => unsubscribe());
+        };
+    }, [userData.friends]);
 
     function HeaderFriendsComponent() {
         return (
@@ -55,33 +99,6 @@ export default function friendsComponent() {
     }
     function AllFriendComponent() {
 
-        const [amigos, setAmigos] = useState([]);
-
-        useEffect(() => {
-            async function fetchAmigosData() {
-                const amigosData = [];
-                const amigosCollection = collection(db, "usuarios"); // Coleção de usuários
-
-                for (const uid of userData.friends) {
-                    const q = query(amigosCollection, where("uid", "==", uid)); // Consulta para o campo 'uid'
-
-                    try {
-                        const querySnapshot = await getDocs(q);
-                        querySnapshot.forEach(doc => {
-                            amigosData.push({ id: doc.id, ...doc.data() }); // Adiciona o ID do documento e os dados
-                        });
-                    } catch (error) {
-                        console.error("Erro ao obter dados do usuário:", error);
-                    }
-                }
-
-                setAmigos(amigosData);
-                console.log(amigosData)
-            }
-
-            fetchAmigosData();
-        }, []);
-
 
         return (
             <Box height="calc(100% - 40px)">
@@ -102,11 +119,13 @@ export default function friendsComponent() {
 
                         <Box display="flex" width="100%" flexDir={'column'}>
                             {amigos.map((request, index) => (
-                                <Box onClick={()=>{setGlobalState('friendchatopen',true), setGlobalState('chatfriendopenuid', request.uid)}} borderBottom={'1px solid #525254'} cursor={'pointer'} _hover={{ 'bg': '#0000001a' }} transition={'all 0.2s'}
+                                console.log(request),
+                                <Box onClick={() => { setGlobalState('friendchatopen', true), setGlobalState('chatfriendopenuid', request.uid) }} borderBottom={'1px solid #525254'} cursor={'pointer'} _hover={{ 'bg': '#0000001a' }} transition={'all 0.2s'}
                                     width="100%" key={index} p='10px' display="flex" alignItems="center" mb="0px">
-                                    <Box display={'flex'} justifyContent='center' alignItems={'center'} mr="10px"
+                                    <Box position={'relative'} display={'flex'} justifyContent='center' alignItems={'center'} mr="10px"
                                         width="40px" height="40px" borderRadius="40px" bg={request.bgIconColor}>
                                         <FaDiscord color='white' fontSize={'20px'} />
+                                        <FaCircle style={{ position: 'absolute', bottom: '-3px', right: '1px' }}  fontSize={'14px'} color={request.onlineStatus === true ? '#23a55a' : '#80848e'} />
 
                                     </Box>
                                     <Box flex="1" mr="10px">
@@ -144,16 +163,47 @@ export default function friendsComponent() {
     function UsersDisponiveisComponent() {
 
         return (
-            <>
+            <Box height="calc(100% - 40px)">
+                {amigos.filter(amigo => amigo.onlineStatus === true).length === 0 ? (
+                    <Box display="flex" flexDir={'column'} justifyContent="center" alignItems="center" height="100%">
+                        <Image
+                            src={disponivel} 
+                            alt="No friend requests"
+                        />
+                        <Text mt="20px" color="#96989D">Ninguém por perto para brincar com o Wumpus .</Text>
+                    </Box>
+                ) : (
+                    <>
+                        <SearchinputComponentFriend />
+                        <Text mt="15px" color="#96989D">Disponíveis - {amigos.filter(amigo => amigo.onlineStatus === true).length}</Text>
+                        <Box mt="10px" width="100%" height="1px" bg="#525254"></Box>
 
-                <Box display="flex" flexDir={'column'} justifyContent="center" alignItems="center" height="calc(100% - 40px)">
-                    <Image
-                        src={disponivel} // Substitua pelo caminho da sua imagem
-                        alt="future"
-                    />
-                    <Text mt="20px" color="#96989D">Aqui ficarão os usuarios online. Funçãoa atualmente em construção.</Text>
-                </Box>
-            </>
+                        <Box display="flex" width="100%" flexDir={'column'}>
+                            {amigos.filter(amigo => amigo.onlineStatus === true).map((request, index) => (
+                                <Box onClick={() => { setGlobalState('friendchatopen', true); setGlobalState('chatfriendopenuid', request.uid); }} borderBottom={'1px solid #525254'} cursor={'pointer'} _hover={{ 'bg': '#0000001a' }} transition={'all 0.2s'}
+                                    width="100%" key={index} p='10px' display="flex" alignItems="center" mb="0px">
+                                    <Box position={'relative'} display={'flex'} justifyContent='center' alignItems={'center'} mr="10px"
+                                        width="40px" height="40px" borderRadius="40px" bg={request.bgIconColor}>
+                                        <FaDiscord color='white' fontSize={'20px'} />
+                                        <FaCircle  fontSize={'14px'} style={{ position: 'absolute', bottom: '-3px', right: '1px' }} color={'#23a55a'} />
+                                    </Box>
+                                    <Box flex="1" mr="10px">
+                                        <Text color="white">{request.username}</Text>
+                                    </Box>
+                                    <Box width="90px">
+                                        <Box justifyContent="flex-end" display="flex">
+                                            <Box display="flex" justifyContent="center" alignItems="center" width="40px" height="40px" borderRadius="40px" bg="#202225">
+                                                <IoChatbubbleSharp fontSize="20px" color="white" />
+                                            </Box>
+                                        </Box>
+                                    </Box>
+                                </Box>
+                            ))}
+                        </Box>
+
+                    </>
+                )}
+            </Box>
         )
     }
     function AmigosPendentesFriendList() {
@@ -405,7 +455,7 @@ export default function friendsComponent() {
                 {selected === 0 ?
                     <SearchinputComponentFriend />
                     : selected === 1 ? <SearchInputAddFriend /> : selected === 2 ? <AmigosPendentesFriendList />
-                        : selected === 3 ? <BlockedUsersComponent /> : selected === 4 ? <AllFriendComponent /> : selected === 5 ? <UsersDisponiveisComponent /> : <></>
+                        : selected === 3 ? <BlockedUsersComponent /> : selected === 4 ? <AllFriendComponent /> : <UsersDisponiveisComponent />
                 }
             </Box>
         </Box>

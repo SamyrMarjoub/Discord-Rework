@@ -15,6 +15,7 @@ const { setGlobalState, useGlobalState } = createGlobalState({
     chatfriendopenuid: null,
     friendChatUserData: [],
     totalNumberMessageNotRead:0,
-    chatsNumberMessageNotRead:{}
+    chatsNumberMessageNotRead:{},
+    friendsAllData:[]
 })
 export { setGlobalState, useGlobalState }

@@ -4,7 +4,8 @@ import { IoAddSharp } from 'react-icons/io5';
 import { FaDiscord, FaUserFriends } from "react-icons/fa";
 import { db } from '@/db/firebase';
 import { setGlobalState, useGlobalState } from '@/globalstate';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, onSnapshot, query, where } from 'firebase/firestore';
+import { FaCircle } from 'react-icons/fa';
 
 const ChatInterface = () => {
   const [userData] = useGlobalState('userData');
@@ -12,35 +13,48 @@ const ChatInterface = () => {
   const [chatsNumberMessageNotRead, setChatsNumberMessageNotRead] = useGlobalState('chatsNumberMessageNotRead');
   const [totalNumberMessageNotRead] = useGlobalState('totalNumberMessageNotRead');
   const [amigos, setAmigos] = useState([]);
+  const [friendsAllData, setfriendsAllData] = useGlobalState('friendsAllData')
 
   useEffect(() => {
-    async function fetchAmigosData() {
-      const amigosData = [];
-      const amigosCollection = collection(db, "usuarios"); // Coleção de usuários
+    const unsubscribeList = []; // Lista para armazenar os unsubscribe de cada snapshot
 
-      if (userData.friends) {
-        for (const uid of userData.friends) {
-          const q = query(amigosCollection, where("uid", "==", uid)); // Consulta para o campo 'uid'
+    function fetchAmigosData() {
+        const amigosData = [];
+        const amigosCollection = collection(db, "usuarios"); // Coleção de usuários
 
-          try {
-            const querySnapshot = await getDocs(q);
-            querySnapshot.forEach(doc => {
-              amigosData.push({ id: doc.id, ...doc.data() }); // Adiciona o ID do documento e os dados
+        userData.friends.forEach(uid => {
+            const q = query(amigosCollection, where("uid", "==", uid)); // Consulta para o campo 'uid'
+
+            const unsubscribe = onSnapshot(q, (querySnapshot) => {
+                querySnapshot.forEach(doc => {
+                    // Verifica se o documento já está na lista para evitar duplicações
+                    const index = amigosData.findIndex(amigo => amigo.id === doc.id);
+                    if (index !== -1) {
+                        // Atualiza o documento existente
+                        amigosData[index] = { id: doc.id, ...doc.data() };
+                    } else {
+                        // Adiciona um novo documento
+                        amigosData.push({ id: doc.id, ...doc.data() });
+                    }
+                });
+                setAmigos([...amigosData]); // Atualiza o estado com uma cópia do array
+                console.log(amigosData);
+                setGlobalState('friendsAllData', amigosData)
+            }, (error) => {
+                console.error("Erro ao obter dados do usuário:", error);
             });
-          } catch (error) {
-            console.error("Erro ao obter dados do usuário:", error);
-          }
-        }
 
-        setAmigos(amigosData);
-        console.log('Dados dos amigos:', amigosData);
-      } else {
-        console.log('Sem amigos');
-      }
+            unsubscribeList.push(unsubscribe); // Adiciona o unsubscribe para ser limpo depois
+        });
     }
 
     fetchAmigosData();
-  }, [userData.friends]);
+
+    return () => {
+        // Limpa os snapshots ao desmontar o componente
+        unsubscribeList.forEach(unsubscribe => unsubscribe());
+    };
+}, [userData.friends]);
 
   useEffect(() => {
     console.log('Modo de mensagens do usuário:', userMessagesMode);
@@ -96,10 +110,10 @@ const ChatInterface = () => {
           <IoAddSharp fontWeight={'700'} color='white' fontSize={'15px'} />
         </Box>
 
-        {amigos.length === 0 ? (
+        {friendsAllData.length === 0 ? (
           [...Array(5)].map((_, index) => renderBoxes(index))
         ) : (
-          amigos.map((request, index) => {
+          friendsAllData.map((request, index) => {
             const userUID = String(userData.uid); 
             const friendUID = String(request.uid); 
 
@@ -142,6 +156,8 @@ const ChatInterface = () => {
                   position="relative"
                 >
                   <FaDiscord color='white' fontSize={'17px'} />
+                                                          <FaCircle style={{position:'absolute', bottom:'-3px', right:'1px'}} fontSize={'14px'}  color={request.onlineStatus === true ? '#23a55a' : '#80848e'} />
+
                   {messageCount > 0 && (
                     <Box
                       width={'15px'}
