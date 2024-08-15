@@ -331,6 +331,9 @@ export default function sidebar() {
         </Box>
     )
 
+    const closeModal = () => {
+        setisUserModalOpen(false);
+    };
 
     return (
 
@@ -516,30 +519,36 @@ export default function sidebar() {
                     {/* Aqui é a barra inferior, que fica o nick, foto de perfil e as configs (LOGOUT) */}
 
                     <Box position={'relative'} display={'flex'} justifyContent={'center'} alignItems={'center'} width={'100%'} height={'50px'} bg={'#232428'}>
-                        {isUserModalOpen ?
-                            <Modalprofileinfo />
-                            : <></>
-                        }
-                        <Box display={'flex'} alignItems={'center'} width={'95%'} height={'90%'} >
-                            <Box onClick={() => setisUserModalOpen(true)} _hover={{ 'bg': '#36393F' }} cursor={'pointer'} transition={'0.2s all'} s width={'80%'} display={'flex'} alignItems={'center'}>
+                        {isUserModalOpen ? <Modalprofileinfo onClose={closeModal} logOut={logout} /> : null}
+                        <Box display={'flex'} alignItems={'center'} width={'95%'} height={'90%'}>
+                            <Box
+                                onClick={() => setisUserModalOpen(true)}
+                                _hover={{ 'bg': '#36393F' }}
+                                cursor={'pointer'}
+                                transition={'0.2s all'}
+                                width={'80%'}
+                                display={'flex'}
+                                alignItems={'center'}
+                            >
                                 <Box width={'35px'} height={'35px'} display={'flex'} justifyContent={'center'} alignItems={'center'} borderRadius={'35px'} bg={userData?.bgIconColor}>
                                     <FaDiscord color='white' fontSize={'25px'} />
                                 </Box>
                                 <Box height={'full'} flex={'2'}>
-                                    <Box display={'flex'} flexDir={'column'} pl='2px' width={'100%'} height={'100%'} >
-                                        <Text as={'span'} mt={'6px'} display={'inline-block'} ml={'5px'} color={'white'} fontWeight={'900'} fontSize={'13px'}>{userData?.username}</Text>
-                                        <Text as={'span'} mt='-5px' display={'inline-block'} ml={'3px'} color={'#96989D'} fontSize={'11.5px'}>#{userData?.uid}</Text>
+                                    <Box display={'flex'} flexDir={'column'} pl='2px' width={'100%'} height={'100%'}>
+                                        <Text as={'span'} mt={'6px'} display={'inline-block'} ml={'5px'} color={'white'} fontWeight={'900'} fontSize={'13px'}>
+                                            {userData?.username}
+                                        </Text>
+                                        <Text as={'span'} mt='-5px' display={'inline-block'} ml={'3px'} color={'#96989D'} fontSize={'11.5px'}>
+                                            #{userData?.uid}
+                                        </Text>
                                     </Box>
                                 </Box>
                             </Box>
-
                             <Box flex={'1'} height={'full'}>
-                                <Box onClick={() => logout()} cursor={'pointer'} _hover={{ 'bg': '#36393F' }} display={'flex'} transition={'0.2s all'} justifyContent={'center'} alignItems={'center'} width={'100%'} height={'100%'}>
+                                <Box cursor={'pointer'} _hover={{ 'bg': '#36393F' }} display={'flex'} transition={'0.2s all'} justifyContent={'center'} alignItems={'center'} width={'100%'} height={'100%'}>
                                     <FaGear color='#96989D' fontSize={'19px'} />
-
                                 </Box>
                             </Box>
-
                         </Box>
                     </Box>
                 </Box>
