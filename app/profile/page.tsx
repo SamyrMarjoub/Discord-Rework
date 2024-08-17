@@ -5,6 +5,7 @@ import { onAuthStateChanged } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import Loading from '../components/profile/loading'
+import Maincomponent from '../components/profile/maincomponent'
 
 export default function page() {
     const router = useRouter()
@@ -16,7 +17,7 @@ export default function page() {
     useEffect(() => {
         setTimeout(() => {
             setIsReady(true)
-        }, 2000)
+        }, 10)
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -32,7 +33,7 @@ export default function page() {
     return (
         <>
       
-            {isReady ? <Box width='100%' height='100vh' bg='#2b2d31'></Box> : <Loading/>}
+            {isReady ? <Maincomponent/> : <Loading/>}
         </>
     )
 }

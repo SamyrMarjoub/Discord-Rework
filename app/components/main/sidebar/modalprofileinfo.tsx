@@ -35,47 +35,55 @@ export default function Modalprofileinfo({ onClose, logOut }) {
             transform={'translateY(-100%)'}
             width={'290px'}
             rounded={'15px'}
-            height={'450px'}
+            height={'AUTO'}
             bg={'#111214'}
             position={'absolute'}
             top={'0px'}
+            pb={'20px'}
         >
-            <Box width={'100%'} display={'flex'} justifyContent={'center'} bg={'red'} roundedTop={'15px'} height={'25%'}>
-                <Box display={'flex'} justifyContent={'flex-end'} width={'90%'}>
+            <Box  width={'100%'} display={'flex'} justifyContent={'center'} bg={'red'} roundedTop={'15px'} height={'25%'}>
+                <Box position={'relative'} display={'flex'} height={'120px'} justifyContent={'flex-end'} width={'90%'}>
                     <Box mt={'10px'} bg={'black'} width={'35px'} height={'35px'} rounded={'35px'} display={'flex'} justifyContent={'center'} alignItems={'center'}>
-                        <FaPen onClick={()=> router.push('/profile')} cursor={'pointer'} fontSize={'14px'} color='white' />
+                        <FaPen onClick={() => router.push('/profile')} cursor={'pointer'} fontSize={'14px'} color='white' />
 
+                    </Box>
+                    <Box
+                        width={'100px'}
+                        bottom={'-30%'}
+                        pos={'absolute'}
+                        display={'flex'}
+                        justifyContent={'center'}
+                        alignItems={'center'}
+                        height={'100px'}
+                        rounded={'100px'}
+                        left={'0px'}
+
+                        bg={userData.bgIconColor} backgroundSize={'cover'} backgroundImage={userData.profilepicture}
+                    >
+                        {userData.profilepicture ? <></> : <FaDiscord color='white' fontSize={'55px'} />}
+                        <FaCircle
+                            fontSize={'20px'}
+                            style={{ position: 'absolute', bottom: '10px', right: '1px' }}
+                            color={'#23a55a'}
+                        />
                     </Box>
                 </Box>
             </Box>
-            <Box position={'relative'} width={'90%'} height={'75%'}>
-                <Box
-                    width={'100px'}
-                    top={'-15%'}
-                    pos={'absolute'}
-                    display={'flex'}
-                    justifyContent={'center'}
-                    alignItems={'center'}
-                    height={'100px'}
-                    rounded={'100px'}
-                    bg={userData.bgIconColor}
-                >
-                    <FaDiscord fontSize={'55px'} color='white' />
-                    <FaCircle
-                        fontSize={'20px'}
-                        style={{ position: 'absolute', bottom: '10px', right: '1px' }}
-                        color={'#23a55a'}
-                    />
-                </Box>
+            <Box width={'90%'} height={'75%'}>
+
                 <Box mt={'60px'}>
                     <Text fontWeight={'800'} color={'white'}>
-                        {userData.username} -{' '}
+                        {userData.username} {' '}
                         <Text as={'span'} fontWeight={'400'} fontSize={'14px'} color={'white'}>
                             #{userData.uid}
                         </Text>
                     </Text>
-                    <Text fontSize={'14px'} color={'white'}>
-                        {userData?.description}
+                    <Text color={'white'} fontSize={'12px'}>
+                        {userData.pronome}
+                    </Text>
+                    <Text fontSize={'14px'} mt={'15px'} color={'white'}>
+                        {userData?.description
+                        }
                     </Text>
                 </Box>
                 <Box display={'flex'} justifyContent={'center'} mt={'20px'} rounded={'10px'} bg={'#2f3236'} width={'100%'} height={'auto'}>

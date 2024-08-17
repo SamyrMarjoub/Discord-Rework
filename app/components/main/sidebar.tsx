@@ -530,8 +530,10 @@ export default function sidebar() {
                                 display={'flex'}
                                 alignItems={'center'}
                             >
-                                <Box width={'35px'} height={'35px'} display={'flex'} justifyContent={'center'} alignItems={'center'} borderRadius={'35px'} bg={userData?.bgIconColor}>
-                                    <FaDiscord color='white' fontSize={'25px'} />
+                                <Box width={'35px'} height={'35px'} display={'flex'} justifyContent={'center'} alignItems={'center'} borderRadius={'35px'} bg={userData.bgIconColor} backgroundSize={'cover'} backgroundImage={userData.profilepicture}>
+                                  {userData.profilepicture ? <></> : <FaDiscord color='white' fontSize={'25px'} />}
+                                    
+
                                 </Box>
                                 <Box height={'full'} flex={'2'}>
                                     <Box display={'flex'} flexDir={'column'} pl='2px' width={'100%'} height={'100%'}>
