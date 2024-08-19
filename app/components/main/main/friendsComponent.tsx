@@ -123,9 +123,11 @@ export default function friendsComponent() {
                                 <Box onClick={() => { setGlobalState('friendchatopen', true), setGlobalState('chatfriendopenuid', request.uid) }} borderBottom={'1px solid #525254'} cursor={'pointer'} _hover={{ 'bg': '#0000001a' }} transition={'all 0.2s'}
                                     width="100%" key={index} p='10px' display="flex" alignItems="center" mb="0px">
                                     <Box position={'relative'} display={'flex'} justifyContent='center' alignItems={'center'} mr="10px"
-                                        width="40px" height="40px" borderRadius="40px" bg={request.bgIconColor}>
-                                        <FaDiscord color='white' fontSize={'20px'} />
-                                        <FaCircle style={{ position: 'absolute', bottom: '-3px', right: '1px' }}  fontSize={'14px'} color={request.onlineStatus === true ? '#23a55a' : '#80848e'} />
+                                        width="40px" height="40px" borderRadius="40px" bg={request.bgIconColor} backgroundSize={'cover'} backgroundImage={request.profilepicture}>
+                                        {request.profilepicture ? <></> : <>
+                                            <FaDiscord color='white' fontSize={'20px'} />
+
+                                        </>}                                        <FaCircle style={{ position: 'absolute', bottom: '-3px', right: '1px' }} fontSize={'14px'} color={request.onlineStatus === true ? '#23a55a' : '#80848e'} />
 
                                     </Box>
                                     <Box flex="1" mr="10px">
@@ -167,7 +169,7 @@ export default function friendsComponent() {
                 {amigos.filter(amigo => amigo.onlineStatus === true).length === 0 ? (
                     <Box display="flex" flexDir={'column'} justifyContent="center" alignItems="center" height="100%">
                         <Image
-                            src={disponivel} 
+                            src={disponivel}
                             alt="No friend requests"
                         />
                         <Text mt="20px" color="#96989D">Ninguém por perto para brincar com o Wumpus .</Text>
@@ -183,9 +185,13 @@ export default function friendsComponent() {
                                 <Box onClick={() => { setGlobalState('friendchatopen', true); setGlobalState('chatfriendopenuid', request.uid); }} borderBottom={'1px solid #525254'} cursor={'pointer'} _hover={{ 'bg': '#0000001a' }} transition={'all 0.2s'}
                                     width="100%" key={index} p='10px' display="flex" alignItems="center" mb="0px">
                                     <Box position={'relative'} display={'flex'} justifyContent='center' alignItems={'center'} mr="10px"
-                                        width="40px" height="40px" borderRadius="40px" bg={request.bgIconColor}>
-                                        <FaDiscord color='white' fontSize={'20px'} />
-                                        <FaCircle  fontSize={'14px'} style={{ position: 'absolute', bottom: '-3px', right: '1px' }} color={'#23a55a'} />
+                                        width="40px" height="40px" borderRadius="40px" bg={request.bgIconColor} backgroundSize={'cover'} backgroundImage={request.profilepicture}>
+                                        {request.profilepicture ? <></> : <>
+                                            <FaDiscord color='white' fontSize={'20px'} />
+
+                                        </>}
+
+                                        <FaCircle fontSize={'14px'} style={{ position: 'absolute', bottom: '-3px', right: '1px' }} color={'#23a55a'} />
                                     </Box>
                                     <Box flex="1" mr="10px">
                                         <Text color="white">{request.username}</Text>
@@ -312,7 +318,7 @@ export default function friendsComponent() {
                         <Box display="flex" width="100%">
                             {pendingFriendRequestsData.map((request, index) => (
                                 <Box borderBottom={'1px solid #525254'} p='10px' cursor={'pointer'} _hover={{ 'bg': '#0000001a' }} transition={'all 0.2s'} width="100%" key={index} display="flex" alignItems="center" mb="10px">
-                                    <Box mr="10px" width="40px" height="40px" borderRadius="40px" bg={request.bgIconColor}></Box>
+                                    <Box mr="10px" width="40px" height="40px" borderRadius="40px" bg={request.bgIconColor} backgroundSize={'cover'} backgroundImage={request.profilepicture}></Box>
                                     <Box flex="1" mr="10px">
                                         <Text color="white">{request.username}</Text>
                                         <Text color="#96989D">Pedido de amizade recebido</Text>

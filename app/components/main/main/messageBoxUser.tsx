@@ -49,47 +49,47 @@ export default function MessageBoxUser() {
     }, [friendtargetUid]);
 
 
-useEffect(() => {
-    let unsubscribe;
-    let isMounted = true; // Track if the component is mounted
+    useEffect(() => {
+        let unsubscribe;
+        let isMounted = true; // Track if the component is mounted
 
-    async function loadChat() {
-        if (!userData?.uid || !frienduserData?.uid) return;
+        async function loadChat() {
+            if (!userData?.uid || !frienduserData?.uid) return;
 
-        const chatId = await getOrCreateChat();
-        setChatId(chatId);
+            const chatId = await getOrCreateChat();
+            setChatId(chatId);
 
-        const messagesRef = collection(db, 'chatsUsuariosFilho', chatId, 'mensagensUserParUser');
-        const q = query(messagesRef, orderBy('originalTimestamp', 'asc'));
+            const messagesRef = collection(db, 'chatsUsuariosFilho', chatId, 'mensagensUserParUser');
+            const q = query(messagesRef, orderBy('originalTimestamp', 'asc'));
 
-        if (userMessagesMode) {
-            // Listen for real-time updates
-            unsubscribe = onSnapshot(q, (querySnapshot) => {
-                const messagesList = querySnapshot.docs.map(doc => doc.data());
-                if (isMounted) { // Check if component is still mounted
-                    setMessages(messagesList);
-                    // updateUnreadMessages(messagesList);
-                    markMessagesAsRead(chatId, messagesList);
-                }
-            });
-        } else {
-            console.log('null');
+            if (userMessagesMode) {
+                // Listen for real-time updates
+                unsubscribe = onSnapshot(q, (querySnapshot) => {
+                    const messagesList = querySnapshot.docs.map(doc => doc.data());
+                    if (isMounted) { // Check if component is still mounted
+                        setMessages(messagesList);
+                        // updateUnreadMessages(messagesList);
+                        markMessagesAsRead(chatId, messagesList);
+                    }
+                });
+            } else {
+                console.log('null');
+            }
         }
-    }
 
-    loadChat();
+        loadChat();
 
-    // Clean up the listener on unmount
-    return () => {
-        isMounted = false; // Mark the component as unmounted
-        if (unsubscribe) {
-            unsubscribe();
-        }
-    };
-}, [userData, frienduserData, userMessagesMode]);
+        // Clean up the listener on unmount
+        return () => {
+            isMounted = false; // Mark the component as unmounted
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        };
+    }, [userData, frienduserData, userMessagesMode]);
 
-    
-    
+
+
 
     async function getOrCreateChat() {
         const userId1 = userData.uid;
@@ -250,7 +250,8 @@ useEffect(() => {
         },
         '::-webkit-scrollbar-thumb:hover': {
             backgroundColor: '#555',
-        },
+        }
+
     };
 
     const formatTimestamp = (timestamp: { seconds: number; }) => {
@@ -307,28 +308,31 @@ useEffect(() => {
             console.error('Erro ao realizar batch commit:', error);
         }
     }
-    
+
     return !userMessagesMode ? (
         <></>
     ) : (
         <Box
-            height={["calc(100vh - 50px)"]}
+            height="calc(100vh - 50px)"
             display="flex"
             flexDirection="column"
-            overflow="hidden"
             width="100%"
+
+
         >
             <Box
-                css={scrollStyle}
+
                 flex="1"
                 display="flex"
                 flexDirection="column"
                 justifyContent="flex-end"
-                overflowY="auto"
                 width="100%"
                 p="4"
+                overflow={'hidden'}
+
             >
-                <Stack spacing="3">
+                <Stack overflow={'auto'}
+                    css={scrollStyle} spacing="3">
                     <Box
                         display="flex"
                         justifyContent="center"
@@ -337,8 +341,15 @@ useEffect(() => {
                         bg={frienduserData.bgIconColor}
                         height="80px"
                         borderRadius="80px"
+                        flexShrink="0"  // Adiciona essa linha
+                        minHeight="80px"  // Adiciona essa linha
+                        backgroundSize={'cover'} backgroundImage={frienduserData.profilepicture}
+
                     >
-                        <FaDiscord fontSize="45px" color="white" />
+                        {frienduserData.profilepicture ? <></> : <>
+                            <FaDiscord fontSize="45px" color="white" />
+
+                        </>}
                     </Box>
                     <Text fontSize="25px" color="white" fontWeight="800">
                         {frienduserData.username}
@@ -363,6 +374,7 @@ useEffect(() => {
                             alignItems="center"
                             transition="0.1s all"
                             bg={isEditingMessage === index ? '#2b2d31' : 'transparent'}
+
                         >
                             <Box display="flex" justifyContent="center" alignItems="center" width="70px" height="55px">
                                 <Box
@@ -374,10 +386,18 @@ useEffect(() => {
                                     justifyContent="center"
                                     alignItems="center"
                                     mb="3px"
+                                    backgroundSize="cover"
+                                    backgroundImage={
+                                        msg.sender === userData.uid ? `url(${userData.profilepicture})` : `url(${frienduserData.profilepicture})`
+                                    }
                                 >
-                                    <FaDiscord fontSize="25px" color="white" />
+                                    {((msg.sender === userData.uid && !userData.profilepicture) ||
+                                        (msg.sender !== userData.uid && !frienduserData.profilepicture)) && (
+                                            <FaDiscord fontSize="25px" color="white" />
+                                        )}
                                 </Box>
                             </Box>
+
                             <Box flex="1" height="100%">
                                 <Box width="100%" display="flex" flexDir="column" justifyItems="center" height="100%">
                                     <Text color="white" as="span">
@@ -462,9 +482,10 @@ useEffect(() => {
                 />
             </Box>
         </Box>
+
     );
-    
-    
+
+
 }
 
 

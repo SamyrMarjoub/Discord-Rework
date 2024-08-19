@@ -36,7 +36,8 @@ export default function messagesBox() {
                     serverId: serverData.id,
                     chatId: selectedChannel.id,
                     content: message,
-                    createdAt:Timestamp.now()
+                    createdAt: Timestamp.now(), 
+                    profilepicture:userData.profilepicture
                 });
 
 
@@ -55,12 +56,12 @@ export default function messagesBox() {
                 where('chatId', '==', chatId),
                 orderBy('createdAt')
             );
-    
+
             const unsubscribe = onSnapshot(q, (querySnapshot) => {
                 const fetchedMessages = querySnapshot.docs.map(doc => doc.data());
                 setMessages(fetchedMessages);
             });
-    
+
             // Cleanup listener on component unmount
             return () => unsubscribe();
         } catch (error) {
@@ -74,32 +75,32 @@ export default function messagesBox() {
             console.error('chatId e messageId são necessários.');
             return;
         }
-    
+
         // Verifica se o usuário atual é o proprietário da mensagem
         if (messageUserId !== userData?.uid) {
             console.error('Você não tem permissão para deletar esta mensagem.');
             return;
         }
-    
+
         try {
             const q = query(
                 collection(db, 'mensagens'),
                 where('chatId', '==', chatId),
                 where('messageId', '==', messageId)
             );
-    
+
             const querySnapshot = await getDocs(q);
-    
+
             if (querySnapshot.empty) {
                 console.error('Nenhuma mensagem encontrada com o messageId fornecido.');
                 return;
             }
-    
+
             querySnapshot.forEach(async (docSnapshot) => {
                 const docRef = doc(db, 'mensagens', docSnapshot.id);
                 await deleteDoc(docRef);
                 console.log(`Mensagem com ID ${docSnapshot.id} deletada com sucesso.`);
-    
+
                 // Atualiza as mensagens após a exclusão
                 await fetchMessages(serverData.id, selectedChannel.id);
             });
@@ -107,14 +108,14 @@ export default function messagesBox() {
             console.error('Erro ao deletar a mensagem: ', error);
         }
     };
-    
+
 
     // Use o useEffect para buscar mensagens quando serverData e selectedChannel mudam
     useEffect(() => {
         if (serverData && selectedChannel) {
             // Fetch messages with real-time listener
             const unsubscribe = fetchMessages(serverData.id, selectedChannel.id);
-    
+
             // Cleanup listener on component unmount
             return () => unsubscribe();
         }
@@ -205,90 +206,101 @@ export default function messagesBox() {
     };
     return (
         (
-            <Box height={["calc(100vh - 50px)"]} display="flex" flexDirection="column" overflow="hidden" width="100%">
-                <Box css={scrollStyle} flex="1" display="flex" flexDirection="column" justifyContent="flex-end" overflowY="auto" width="100%" p="4">
-                <Stack spacing="3">
-                    {getMessages.map((msg, index) => (
-                        <Box
-                            w={'100%'}
-                            height={'auto'}
-                            minH={'55px'}
-                            display={'flex'}
-                            key={index}
-                            onMouseEnter={() => setHoveredIndex(index)}
-                            onMouseLeave={() => setHoveredIndex(null)}
-                            _hover={{ 'bg': '#2b2d31' }}
-                            alignItems={'center'}
-                            transition={'0.1s all'}
-                            bg={isEditingMessage === index ? '#2b2d31' : 'transparent'}
-                        >
-                            <Box display={'flex'} justifyContent={'center'} alignItems={'center'} width={'70px'} height={'55px'}>
-                                <Box
-                                    bg={msg.bgIconColor}
-                                    height={'40px'}
-                                    width={'40px'}
-                                    borderRadius={'40px'}
-                                    display={'flex'}
-                                    justifyContent={'center'}
-                                    alignItems={'center'}
-                                    mb={'3px'}
-                                >
-                                    <FaDiscord fontSize={'25px'} color='white' />
-                                </Box>
+            <Box height={["calc(100vh - 50px)"]} display="flex" flexDirection="column" width="100%">
+                <Box overflow="hidden" flex="1" display="flex" flexDirection="column" justifyContent="flex-end" width="100%" p="4">
+
+                    <Stack overflowY="auto" css={scrollStyle} spacing="3">
+                        <Box mb={'15px'} width={'100%'} height={'auto'}>
+                            <Box bg={'#41434a'} display={'flex'} justifyContent={'center'} alignItems={'center'} rounded={'80px'} height={'80px'} width={'80px'}>
+                                <FaHashtag fontSize={'40px'} color='white' />
                             </Box>
-                            <Box flex={'1'} height={'100%'}>
-                                <Box width={'100%'} display={'flex'} flexDir={'column'} justifyItems={'center'} height={'100%'}>
-                                    <Text color={'white'} as={'span'}>
-                                        {msg.username}
-                                        <Text ml={'10px'} as={'span'} fontSize={'14px'} color={'#96989D'}>
-                                            {formatTimestamp(msg.timestamp)}
-                                        </Text>
-                                    </Text>
-
-                                    {isEditingMessage === index ? (
-                                        <Box height={'60px'}>
-                                            <Input padding={'0px'} _focusVisible={{ 'border': 'none' }} outline={'none'} color={'white'} bg='#2b2d31' border={'none'} onChange={(e) => setMessageEdited(e.target.value)} value={messageEdited} onKeyDown={(event) => handleKeyDown(msg.chatId, event, 'edit')} />
-                                            <Stack flexDir={'row'}>
-                                                <Text cursor={'pointer'} fontSize={'11px'} color={'white'} onClick={() => [setHoveredIndex(null), console.log(hoveredIndex), setIsEditingMessage(false)]}>Cancelar</Text>
-                                                <Text cursor={'pointer'} fontSize={'11px'} onClick={(event) => handleAction(msg.chatId, 'edit')} color={'#00AFF4'}>Enviar</Text>
-                                            </Stack>
-
-
-                                        </Box>
-                                    ) : (
-                                        <>
-                                            <Text mb={'-2px'} fontSize={'16px'} color={'#96989D'}>
-                                                {msg.content}
-                                                {msg.isEdited && <Text as="span" fontSize={'11px'} color={'#00AFF4'}> (editado)</Text>}
-
-                                            </Text>
-                                        </>
-                                    )}
-
-                                </Box>
-                            </Box>
-                            {hoveredIndex === index && !isEditingMessage  && msg.userId === userData?.uid && (
-                                <>
-                                    <MdDelete
-                                        cursor={'pointer'}
-                                        color='#96989D'
-                                        onClick={() => deleteMessage(msg.chatId, msg.messageId, msg.userId)}
-                                        fontSize={'20px'}
-                                        style={{ 'marginRight': '10px' }}
-                                    />
-                                    <MdEdit
-                                        style={{ 'marginRight': '10px' }}
-                                        onClick={() => handleEditMessage(msg.messageId, msg.content, index)}
-                                        cursor={'pointer'}
-                                        color='#96989D'
-                                        fontSize={'20px'}
-                                    />
-                                </>
-                            )}
-
+                            <Text mt={'15px'} color={'#96989D'}>Este é o começo do canal <Text as={'span'} color={'white'}>{selectedChannel?.name}</Text></Text>
                         </Box>
-                    ))}
-                </Stack>
+                        {getMessages.map((msg, index) => (
+                            <Box
+                                w={'100%'}
+                                height={'auto'}
+                                minH={'55px'}
+                                display={'flex'}
+                                key={index}
+                                onMouseEnter={() => setHoveredIndex(index)}
+                                onMouseLeave={() => setHoveredIndex(null)}
+                                _hover={{ 'bg': '#2b2d31' }}
+                                alignItems={'center'}
+                                transition={'0.1s all'}
+                                bg={isEditingMessage === index ? '#2b2d31' : 'transparent'}
+                            >
+                                <Box display={'flex'} justifyContent={'center'} alignItems={'center'} width={'70px'} height={'55px'}>
+                                    <Box
+                                        bg={msg.bgIconColor}
+                                        height={'40px'}
+                                        width={'40px'}
+                                        borderRadius={'40px'}
+                                        display={'flex'}
+                                        justifyContent={'center'}
+                                        alignItems={'center'}
+                                        mb={'3px'}
+                                        backgroundSize={'cover'} backgroundImage={msg.profilepicture}
+                                    >
+                                        {msg.profilepicture ? <></> : <>
+                                            <FaDiscord fontSize="25px" color="white" />
+
+                                        </>}
+                                    </Box>
+                                </Box>
+                                <Box flex={'1'} height={'100%'}>
+                                    <Box width={'100%'} display={'flex'} flexDir={'column'} justifyItems={'center'} height={'100%'}>
+                                        <Text color={'white'} as={'span'}>
+                                            {msg.username}
+                                            <Text ml={'10px'} as={'span'} fontSize={'14px'} color={'#96989D'}>
+                                                {formatTimestamp(msg.timestamp)}
+                                            </Text>
+                                        </Text>
+
+                                        {isEditingMessage === index ? (
+                                            <Box height={'60px'}>
+                                                <Input padding={'0px'} _focusVisible={{ 'border': 'none' }} outline={'none'} color={'white'} bg='#2b2d31' border={'none'} onChange={(e) => setMessageEdited(e.target.value)} value={messageEdited} onKeyDown={(event) => handleKeyDown(msg.chatId, event, 'edit')} />
+                                                <Stack flexDir={'row'}>
+                                                    <Text cursor={'pointer'} fontSize={'11px'} color={'white'} onClick={() => [setHoveredIndex(null), console.log(hoveredIndex), setIsEditingMessage(false)]}>Cancelar</Text>
+                                                    <Text cursor={'pointer'} fontSize={'11px'} onClick={(event) => handleAction(msg.chatId, 'edit')} color={'#00AFF4'}>Enviar</Text>
+                                                </Stack>
+
+
+                                            </Box>
+                                        ) : (
+                                            <>
+                                                <Text mb={'-2px'} fontSize={'16px'} color={'#96989D'}>
+                                                    {msg.content}
+                                                    {msg.isEdited && <Text as="span" fontSize={'11px'} color={'#00AFF4'}> (editado)</Text>}
+
+                                                </Text>
+                                            </>
+                                        )}
+
+                                    </Box>
+                                </Box>
+                                {hoveredIndex === index && !isEditingMessage && msg.userId === userData?.uid && (
+                                    <>
+                                        <MdDelete
+                                            cursor={'pointer'}
+                                            color='#96989D'
+                                            onClick={() => deleteMessage(msg.chatId, msg.messageId, msg.userId)}
+                                            fontSize={'20px'}
+                                            style={{ 'marginRight': '10px' }}
+                                        />
+                                        <MdEdit
+                                            style={{ 'marginRight': '10px' }}
+                                            onClick={() => handleEditMessage(msg.messageId, msg.content, index)}
+                                            cursor={'pointer'}
+                                            color='#96989D'
+                                            fontSize={'20px'}
+                                        />
+                                    </>
+                                )}
+
+                            </Box>
+                        ))}
+                    </Stack>
                 </Box>
                 <Box p="4" pt={'0px'}>
                     <Input
@@ -305,5 +317,5 @@ export default function messagesBox() {
                 </Box>
             </Box>
         ))
-    }
+}
 

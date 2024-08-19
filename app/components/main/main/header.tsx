@@ -30,8 +30,11 @@ export default function header() {
               </>
             ) : (
               <>
-                <Box width={'35px'} height={'35px'} display={'flex'} justifyContent={'center'} alignItems={'center'} borderRadius={'35px'} bg={frienduserData?.bgIconColor} >
-                  <FaDiscord fontSize={'20px'} color='white' />
+                <Box width={'35px'} height={'35px'} display={'flex'} justifyContent={'center'} alignItems={'center'} borderRadius={'35px'} bg={frienduserData?.bgIconColor}  backgroundSize={'cover'} backgroundImage={frienduserData.profilepicture} >
+                {frienduserData.profilepicture ? <></> : <>
+                            <FaDiscord fontSize="20px" color="white" />
+
+                        </>}
                 </Box>
                 <Text ml={'7px'} color={'white'}>{frienduserData?.username}</Text>
 

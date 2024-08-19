@@ -14,8 +14,7 @@ import { MyContext } from '@/app/context';
 import Image from 'next/image';
 import { IoIosArrowDown } from 'react-icons/io';
 import Usertousersidebar from './sidebar/usertousersidebar';
-import { ref, set, onDisconnect, onValue } from 'firebase/database';  // Para o Realtime Database
-import { getDatabase } from 'firebase/database';  // Adiciona o Realtime Database
+import { ref, set, onDisconnect, onValue, getDatabase } from 'firebase/database';  // Para o Realtime Database
 import app from '@/db/firebase';
 import Modalprofileinfo from './sidebar/modalprofileinfo';
 
@@ -40,6 +39,8 @@ export default function sidebar() {
     const [docRef, setDocRef] = useState(null)
     const [isUserModalOpen, setisUserModalOpen] = useState(false)
     const realtimeDb = getDatabase(app)
+    const [showServerUid, setShowServerUid] = useState(false)
+    // const [ServerId, setServerId]= useState('')
 
     let unsubscribeFunctions = [];
 
@@ -334,7 +335,20 @@ export default function sidebar() {
     const closeModal = () => {
         setisUserModalOpen(false);
     };
+    function ModalShowServerId() {
+        return (
+            <>
+                <Box onClick={()=> setShowServerUid(false)} bg={'#00000080'} zIndex={'999'} pos={'absolute'} left={'0'} bottom={'0'} height={'100vh'} className='w-full flex justify-center items-center'>
 
+                    <Box  onClick={(e)=> e.stopPropagation()} p='4' width={'350px'} textAlign={'center'} display={'flex'} justifyContent={'center'} flexDir={'column'} alignItems={'center'} height={'auto'} bg={'white'}>
+                        <Text color={'black'}>Este é o ID do servidor, os usuarios poderão entrar neste servidor usando isto.</Text>
+                        <Text color={'black'} fontSize={'25px'} fontWeight={'700'}>{ServerData.id}</Text>
+
+                    </Box>
+                </Box>
+            </>
+        )
+    }
     return (
 
         //Div Geral - Tamanho do sidebar inteiro
@@ -344,8 +358,9 @@ export default function sidebar() {
                     <Box w={'100%'} height={'58px'} position={'relative'} display={'flex'} justifyContent={'center'} >
                         <Box _hover={{ 'bg': '#5865f2' }} position={'relative'} cursor={'pointer'} onClick={() => { setNumberMessageNotRead(0), [setGlobalState('userMessagesMode', true), setGlobalState('isServerSelected', false)] }} lineHeight={'center'} bg={userMessagesMode ? '#5865f2' : '#36393F'} display={'flex'} justifyContent={'center'} alignItems={'center'} borderRadius={'47px'} w={'47px'} height={'47px'}>
                             <FaDiscord color='#DCDDDE' fontSize={'25px'} />
-                            {NumberMessageNotRead !== 0 ? <Box width={'18px'} height={'18px'} display={'flex'} justifyContent={'center'} alignItems={'center'} position={'absolute'} right={'-2px'} rounded={'18px'} bottom={'0px'} bg={'red'} color={'white'}>
+                            {NumberMessageNotRead !== 0 && !userMessagesMode ? <Box width={'18px'} height={'18px'} display={'flex'} justifyContent={'center'} alignItems={'center'} position={'absolute'} right={'-2px'} rounded={'18px'} bottom={'0px'} bg={'red'} color={'white'}>
                                 <Text color={'white'} fontSize={'13px'} fontWeight={'700'}>{NumberMessageNotRead}</Text>
+
                             </Box> : <></>}
                         </Box>
                         <Box width={'60%'} height={'2px'} bg={'#36393F'} position={'absolute'} bottom={'0'} left={'20%'}>
@@ -378,16 +393,17 @@ export default function sidebar() {
                         ) : <></>}
 
                     </Box>
-                    <Box display={'flex'} position={'relative'} flexDir={'column'} justifyContent={'center'} alignItems={'center'} w={'100%'} mt={'10px'} height={'auto'}>
+                    <Box display={'flex'} position={'relative'} flexDir={'column'} justifyContent={'center'} alignItems={'center'} w={'100%'} mt={userHasServer ? '10px' : '0px'} height={'auto'}>
 
                         {/* Essa é a Div da linha */}
 
-                        <Box width={'60%'} height={'2px'} bg={'#36393F'} position={'absolute'} top={'0'} left={'20%'}>
+                        {userHasServer ? <Box width={'60%'} height={'2px'} bg={'#36393F'} position={'absolute'} top={'0'} left={'20%'}>
 
-                        </Box>
+                        </Box> : <></>}
+
 
                         {/* Essa é a Div de add servidor */}
-                        <Box cursor={'pointer'} onClick={() => modalSwitch()} display={'flex'} justifyContent={'center'} alignItems={'center'} mt={'10px'} width={'50px'} height={'50px'} borderRadius={'50px'} bg={'#36393F'}>
+                        <Box cursor={'pointer'} onClick={() => modalSwitch()} display={'flex'} justifyContent={'center'} alignItems={'center'} mt={userHasServer ? '10px' : '0px'} width={'50px'} height={'50px'} borderRadius={'50px'} bg={'#36393F'}>
                             <IoAddSharp fontSize={'30px'} color='#3BA55D' />
                         </Box>
 
@@ -409,9 +425,10 @@ export default function sidebar() {
 
                             <Box display={'flex'} justifyContent={'center'} alignItems={'center'} width={'100%'} height={'50px'}>
                                 <Box width={'90%'} display={'flex'} justifyContent={'space-between'} alignItems={'center'} height={'90%'}>
-                                    <Text fontWeight={'800'} fontSize={'15px'} color={'white'}>{SingleServData?.name}</Text>
+                                    <Text fontWeight={'800'} fontSize={'15px'} color={'white'} onClick={() => setShowServerUid(true)} cursor={'cursor'} >{SingleServData?.name}</Text>
                                     <IoIosArrowDown color='white' fontSize={'16px'} />
 
+                                    {showServerUid ? <ModalShowServerId /> : <></>}
                                 </Box>
                             </Box>
 
@@ -531,8 +548,8 @@ export default function sidebar() {
                                 alignItems={'center'}
                             >
                                 <Box width={'35px'} height={'35px'} display={'flex'} justifyContent={'center'} alignItems={'center'} borderRadius={'35px'} bg={userData.bgIconColor} backgroundSize={'cover'} backgroundImage={userData.profilepicture}>
-                                  {userData.profilepicture ? <></> : <FaDiscord color='white' fontSize={'25px'} />}
-                                    
+                                    {userData.profilepicture ? <></> : <FaDiscord color='white' fontSize={'25px'} />}
+
 
                                 </Box>
                                 <Box height={'full'} flex={'2'}>

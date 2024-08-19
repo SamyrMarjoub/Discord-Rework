@@ -8,6 +8,7 @@ import { auth, db, storage } from '@/db/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { getDownloadURL, ref, uploadString } from 'firebase/storage';
 import Image from 'next/image';
+
 export default function maincomponent() {
 
     const [userData, setUserData] = useState('userData');
@@ -17,28 +18,32 @@ export default function maincomponent() {
     const [alteracao, setAlteracao] = useState(false)
     const [docUserRef, setDocUserRef] = useState(null)
     const router = useRouter()
-    const [imageUrl, setImageUrl] = useState('')
+    const [imageUrl, setImageUrl] = useState(null)
+   
 
     async function getUserData() {
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 const docRef = doc(db, "usuarios", user.uid);
-
-                // Ouvir mudanças em tempo real no documento
-                const unsubscribe = onSnapshot(docRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        setUserData(docSnap.data());
-                        setDocUserRef(docRef);
-                    }
-                }, (error) => {
-                    console.error("Erro ao escutar documento:", error);
-                });
-
-                // Retornar uma função de limpeza para parar de escutar mudanças
-                return () => unsubscribe();
+    
+                // Evitar múltiplos listeners, assegurando que apenas um está ativo
+                if (!docUserRef) {
+                    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+                        if (docSnap.exists()) {
+                            setUserData(docSnap.data());
+                            setDocUserRef(docRef);
+                        }
+                    }, (error) => {
+                        console.error("Erro ao escutar documento:", error);
+                    });
+    
+                    // Retornar função de cleanup para garantir que o listener seja removido
+                    return () => unsubscribe();
+                }
             }
         });
     }
+    
     const updateDocument = async () => {
         if (docUserRef) {
             try {
@@ -89,9 +94,14 @@ export default function maincomponent() {
             console.error('Referência do documento não definida.');
         }
     };
+
+   
+
     useEffect(() => {
         getUserData()
     }, [])
+
+
     useEffect(() => {
         if (name !== "" || pronome !== "" || description !== "" || imageUrl !== null) setAlteracao(true)
         else setAlteracao(false)
@@ -109,7 +119,7 @@ export default function maincomponent() {
         return (
             <Box padding={'10px'} height={'50px'} bottom={'10px'} bg={'#111214'} display={'flex'} position={'absolute'} width={'100%'}>
                 <Box width={'70%'} height={'100%'} display={'flex'} alignItems={'center'}>
-                    <Text color={"#a3a5a8"}>Cuidado -- voc~e tem alterações que não foram salvas!</Text>
+                    <Text color={"#a3a5a8"}>Cuidado -- você tem alterações que não foram salvas!</Text>
                 </Box>
                 <Box justifyContent={'space-between'} display={'flex'} width={'30%'}>
                     <Button onClick={handleReset} _hover={{ 'bg': "none", "color": "white" }} height={'30px'} fontSize={'14px'} bg={'transparent'} color={'#a3a5a8'}>Redefinir</Button>

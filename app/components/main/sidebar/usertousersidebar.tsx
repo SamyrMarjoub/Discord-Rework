@@ -19,42 +19,42 @@ const ChatInterface = () => {
     const unsubscribeList = []; // Lista para armazenar os unsubscribe de cada snapshot
 
     function fetchAmigosData() {
-        const amigosData = [];
-        const amigosCollection = collection(db, "usuarios"); // Coleção de usuários
+      const amigosData = [];
+      const amigosCollection = collection(db, "usuarios"); // Coleção de usuários
 
-        userData.friends.forEach(uid => {
-            const q = query(amigosCollection, where("uid", "==", uid)); // Consulta para o campo 'uid'
+      userData.friends.forEach(uid => {
+        const q = query(amigosCollection, where("uid", "==", uid)); // Consulta para o campo 'uid'
 
-            const unsubscribe = onSnapshot(q, (querySnapshot) => {
-                querySnapshot.forEach(doc => {
-                    // Verifica se o documento já está na lista para evitar duplicações
-                    const index = amigosData.findIndex(amigo => amigo.id === doc.id);
-                    if (index !== -1) {
-                        // Atualiza o documento existente
-                        amigosData[index] = { id: doc.id, ...doc.data() };
-                    } else {
-                        // Adiciona um novo documento
-                        amigosData.push({ id: doc.id, ...doc.data() });
-                    }
-                });
-                setAmigos([...amigosData]); // Atualiza o estado com uma cópia do array
-                console.log(amigosData);
-                setGlobalState('friendsAllData', amigosData)
-            }, (error) => {
-                console.error("Erro ao obter dados do usuário:", error);
-            });
-
-            unsubscribeList.push(unsubscribe); // Adiciona o unsubscribe para ser limpo depois
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+          querySnapshot.forEach(doc => {
+            // Verifica se o documento já está na lista para evitar duplicações
+            const index = amigosData.findIndex(amigo => amigo.id === doc.id);
+            if (index !== -1) {
+              // Atualiza o documento existente
+              amigosData[index] = { id: doc.id, ...doc.data() };
+            } else {
+              // Adiciona um novo documento
+              amigosData.push({ id: doc.id, ...doc.data() });
+            }
+          });
+          setAmigos([...amigosData]); // Atualiza o estado com uma cópia do array
+          console.log(amigosData);
+          setGlobalState('friendsAllData', amigosData)
+        }, (error) => {
+          console.error("Erro ao obter dados do usuário:", error);
         });
+
+        unsubscribeList.push(unsubscribe); // Adiciona o unsubscribe para ser limpo depois
+      });
     }
 
     fetchAmigosData();
 
     return () => {
-        // Limpa os snapshots ao desmontar o componente
-        unsubscribeList.forEach(unsubscribe => unsubscribe());
+      // Limpa os snapshots ao desmontar o componente
+      unsubscribeList.forEach(unsubscribe => unsubscribe());
     };
-}, [userData.friends]);
+  }, [userData.friends]);
 
   useEffect(() => {
     console.log('Modo de mensagens do usuário:', userMessagesMode);
@@ -114,8 +114,8 @@ const ChatInterface = () => {
           [...Array(5)].map((_, index) => renderBoxes(index))
         ) : (
           friendsAllData.map((request, index) => {
-            const userUID = String(userData.uid); 
-            const friendUID = String(request.uid); 
+            const userUID = String(userData.uid);
+            const friendUID = String(request.uid);
 
             // Construindo a chave do chat
             const possibleKeys = [`${userUID}_${friendUID}`, `${friendUID}_${userUID}`];
@@ -152,11 +152,13 @@ const ChatInterface = () => {
                   width="30px"
                   height="30px"
                   borderRadius="30px"
-                  bg={request.bgIconColor}
+                  bg={request.bgIconColor} backgroundSize={'cover'} backgroundImage={request.profilepicture}
                   position="relative"
                 >
-                  <FaDiscord color='white' fontSize={'17px'} />
-                                                          <FaCircle style={{position:'absolute', bottom:'-3px', right:'1px'}} fontSize={'14px'}  color={request.onlineStatus === true ? '#23a55a' : '#80848e'} />
+
+                  {request.profilepicture ? <></> : <>
+                    <FaDiscord color='white' fontSize={'17px'} /></>}
+                  <FaCircle style={{ position: 'absolute', bottom: '-3px', right: '1px' }} fontSize={'14px'} color={request.onlineStatus === true ? '#23a55a' : '#80848e'} />
 
                   {messageCount > 0 && (
                     <Box
