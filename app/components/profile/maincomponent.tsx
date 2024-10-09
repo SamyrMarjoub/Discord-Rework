@@ -49,34 +49,34 @@ export default function maincomponent() {
             try {
                 // Primeiro, obter o documento atual para verificar quais campos existem
                 const docSnap = await getDoc(docUserRef);
-
+    
                 if (docSnap.exists()) {
                     const updateFields = {};
-
-                    // Verificar se cada campo tem um valor não vazio e adicioná-lo ao objeto de atualização
-                    if (name.trim() !== '') {
-                        updateFields['username'] = name;
+    
+                    // Verificar se cada campo não é null/undefined e tem um valor não vazio
+                    if (name?.trim()) {
+                        updateFields['username'] = name.trim();
                     }
-                    if (pronome.trim() !== '') {
-                        updateFields['pronome'] = pronome;
+                    if (pronome?.trim()) {
+                        updateFields['pronome'] = pronome.trim();
                     }
-                    if (description.trim() !== '') {
-                        updateFields['description'] = description;
+                    if (description?.trim()) {
+                        updateFields['description'] = description.trim();
                     }
-                    if (imageUrl.trim() !== '') {
+                    if (imageUrl?.trim()) {
                         // Criar uma referência para o arquivo no Firebase Storage
                         const imgRef = ref(storage, `usuarios/${userData.uid}/userProfilePicture`);
-
+    
                         // Fazer o upload da imagem
                         await uploadString(imgRef, imageUrl, 'data_url');
-
+    
                         // Obter a URL de download da imagem
                         const downloadUrl = await getDownloadURL(imgRef);
-
+    
                         // Atualizar o Firestore com a URL da imagem
                         updateFields['profilepicture'] = downloadUrl;
                     }
-
+    
                     // Se houver campos para atualizar, faça a atualização
                     if (Object.keys(updateFields).length > 0) {
                         await updateDoc(docUserRef, updateFields);
@@ -94,7 +94,7 @@ export default function maincomponent() {
             console.error('Referência do documento não definida.');
         }
     };
-
+    
    
 
     useEffect(() => {
